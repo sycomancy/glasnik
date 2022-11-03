@@ -38,7 +38,7 @@ func makeHTTPHandlerFunc(apiFunc APIFunc) http.HandlerFunc {
 }
 
 func (s *JSONAPIServer) handleFetchAds(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	// TODO(dhudek): parse url from request
+	// TODO(sycomancy): parse url from request
 	url := r.URL.Query().Get("ticker")
 	data, err := s.svc.FetchAds(ctx, url)
 	if err != nil {
