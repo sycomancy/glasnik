@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-
-	"github.com/damjackk/njufetch/infra"
+	"github.com/sirupsen/logrus"
+	"github.com/sycomancy/glasnik/infra"
+	"github.com/sycomancy/glasnik/types"
 )
 
 const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .EntityList-item.EntityList-item--Regular"
@@ -17,15 +18,8 @@ var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
 
-type EntityItem struct {
-	Id    string
-	Title string
-	Link  string
-	Price string
-}
-
-func Fetch(url string, client *infra.IncognitoClient) ([]EntityItem, error) {
-	items := make([]EntityItem, 0)
+func Fetch(url string, client *infra.IncognitoClient) ([]types.AdsPageResponse, error) {
+	items := make([]types.AdsPageResponse, 0)
 
 	hasMorePage := true
 	page := 1
@@ -42,7 +36,6 @@ func Fetch(url string, client *infra.IncognitoClient) ([]EntityItem, error) {
 		} else {
 			items = append(items, pageItems...)
 			hasMorePage = true
-			fmt.Printf("Fetched: %d%s%d\n", len(pageItems), " for page: ", page)
 			page += 1
 		}
 	}
@@ -54,7 +47,7 @@ func Fetch(url string, client *infra.IncognitoClient) ([]EntityItem, error) {
 	return items, nil
 }
 
-func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]EntityItem, error) {
+func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdsPageResponse, error) {
 	urlWithPage := url
 
 	if page != 1 {
@@ -62,19 +55,18 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]Ent
 	}
 
 	status, body, error := client.GetURLDataWithRetries(urlWithPage, headers)
-	fmt.Println("getItemsForPage ", status)
-
 	// Find review items
-	items := []EntityItem{}
+	items := []types.AdsPageResponse{}
 
 	if status == ErrBadRequest.Error() {
 		// TODO(sycomancy): handle 400 BAD REQUEST!!!
-		fmt.Printf("WE got 400 for %s \n", status)
+		logrus.WithFields(logrus.Fields{
+			"status": status,
+		}).Warning("njuskalo returned 400 bad request")
 		return nil, ErrBadRequest
 	}
 
 	if strings.Contains(status, "404") {
-		fmt.Printf("WE got 400 for url %s", status)
 		return items, nil
 	}
 
@@ -98,6 +90,7 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]Ent
 		titleEl := s.Find(entityTitleQuery)
 		hrefAttr, exists := titleEl.Attr("href")
 		price = s.Find(entityPriceQuery).Text()
+		title = titleEl.Text()
 
 		if idExists {
 			id = itemId
@@ -107,7 +100,7 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]Ent
 			link = hrefAttr
 		}
 
-		item := EntityItem{Id: id, Title: title, Link: link, Price: price}
+		item := types.AdsPageResponse{Id: id, Title: title, Link: link, Price: price}
 		items = append(items, item)
 	})
 

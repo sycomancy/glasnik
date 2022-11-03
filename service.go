@@ -2,31 +2,32 @@ package main
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/damjackk/njufetch/types"
+	"github.com/sirupsen/logrus"
+	"github.com/sycomancy/glasnik/infra"
+	"github.com/sycomancy/glasnik/njuskalo"
+	"github.com/sycomancy/glasnik/types"
 )
 
 // AdsFetcher is an interface that can fetch a ads
 type AdsFetcher interface {
-	FetchAds(context.Context, string) ([]types.AddPageResponse, error)
+	FetchAds(context.Context, *infra.IncognitoClient, string) ([]types.AdsPageResponse, error)
 }
 
 // priceFetcher implements an interface
 type adsFetcher struct{}
 
-func (a *adsFetcher) FetchAds(ctx context.Context, url string) ([]types.AddPageResponse, error) {
-	return MockAdsFetcher(ctx, url)
-}
+func (a *adsFetcher) FetchAds(ctx context.Context, ic *infra.IncognitoClient, url string) ([]types.AdsPageResponse, error) {
+	result, err := njuskalo.Fetch(url, ic)
+	if err != nil {
+		fmt.Print(result)
+	}
 
-var adsMock = []types.AddPageResponse{{
-	Id:    "1",
-	Title: "Naslov1",
-	Link:  "http://url",
-	Price: 12323,
-}}
+	logrus.WithFields(logrus.Fields{
+		"count": len(result),
+		"url":   url,
+	}).Info("results from njuskalo")
 
-func MockAdsFetcher(ctx context.Context, url string) ([]types.AddPageResponse, error) {
-	// mimick http roundtrip
-	//time.Sleep(2 * time.Second)
-	return adsMock, nil
+	return result, nil
 }

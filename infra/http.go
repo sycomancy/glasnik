@@ -129,7 +129,7 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 			"error":    err,
 			"status":   status,
 			"retry in": backoff,
-		}).Warning("http-client handling error from with retry")
+		}).Warn("http-client handle error with retry")
 
 		t.tor.newIp()
 		time.Sleep(backoff)

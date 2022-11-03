@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/damjackk/njufetch/types"
 	"github.com/sirupsen/logrus"
+	"github.com/sycomancy/glasnik/infra"
+	"github.com/sycomancy/glasnik/types"
 )
 
 type loggingService struct {
@@ -18,7 +19,7 @@ func NewLoggingService(next AdsFetcher) AdsFetcher {
 	}
 }
 
-func (l *loggingService) FetchAds(ctx context.Context, url string) ([]types.AddPageResponse, error) {
+func (l *loggingService) FetchAds(ctx context.Context, ic *infra.IncognitoClient, url string) ([]types.AdsPageResponse, error) {
 	defer func(begin time.Time) {
 		logrus.WithFields(logrus.Fields{
 			"requestID": ctx.Value("requestID"),
@@ -27,5 +28,5 @@ func (l *loggingService) FetchAds(ctx context.Context, url string) ([]types.AddP
 		}).Info("fetchAds")
 	}(time.Now())
 
-	return l.next.FetchAds(ctx, url)
+	return l.next.FetchAds(ctx, ic, url)
 }

@@ -1,8 +1,8 @@
 package types
 
-type AddPageResponse struct {
+type AdsPageResponse struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
 	Link  string `json:"link"`
-	Price int32  `json:"price"`
+	Price string `json:"price"`
 }

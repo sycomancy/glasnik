@@ -1,4 +1,4 @@
-module github.com/damjackk/njufetch
+module github.com/sycomancy/glasnik
 
 go 1.19
 
