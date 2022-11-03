@@ -1,2 +1,2 @@
-# glasnik
-API for popular &lt;couontry> advertisement board
+# njufetch
+Fetch data from Njuskalo
