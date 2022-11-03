@@ -6,3 +6,7 @@ type AdsPageResponse struct {
 	Link  string `json:"link"`
 	Price string `json:"price"`
 }
+
+type RequestData struct {
+	Filter string `json:"filter"`
+}

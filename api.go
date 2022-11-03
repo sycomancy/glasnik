@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/sycomancy/glasnik/infra"
+	"github.com/sycomancy/glasnik/types"
 )
 
 type APIFunc func(context.Context, http.ResponseWriter, *http.Request) error
@@ -35,7 +36,6 @@ func (s *JSONAPIServer) Run() {
 func makeHTTPHandlerFunc(apiFunc APIFunc) http.HandlerFunc {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "requestID", rand.Intn(10000000))
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := apiFunc(ctx, w, r); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
@@ -54,13 +54,8 @@ func (s *JSONAPIServer) handleFetchAds(ctx context.Context, w http.ResponseWrite
 	return writeJSON(w, http.StatusOK, &data)
 }
 
-// TODO(sy): move this to types
-type RequestData struct {
-	Filter string `json:"filter"`
-}
-
 func (s *JSONAPIServer) handleFetchAdsPOST(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	var requestData RequestData
+	var requestData types.RequestData
 	if r.Method != http.MethodPost {
 		return fmt.Errorf("unsupported method")
 	}
