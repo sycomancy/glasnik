@@ -13,7 +13,7 @@ type AdEntry struct {
 type RequestDataDTO struct {
 	Filter      string `json:"filter"`
 	Token       string `json:"token"`
-	CallbackURL string `json:"callback"`
+	CallbackURL string `json:"callbackUrl"`
 }
 
 // Result for data fetching request

@@ -2,6 +2,7 @@ package njuskalo
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -49,9 +50,12 @@ func Fetch(url string, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 
 func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 	urlWithPage := url
-
-	if page != 1 {
-		urlWithPage = fmt.Sprintf("%s%s%d", url, "&page=", page)
+	if page > 1 {
+		u, err := buildURL(url, page)
+		urlWithPage = u
+		if err != nil {
+			return nil, ErrBadRequest
+		}
 	}
 
 	status, body, error := client.GetURLDataWithRetries(urlWithPage, headers)
@@ -62,17 +66,27 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 		// TODO(sycomancy): handle 400 BAD REQUEST!!!
 		logrus.WithFields(logrus.Fields{
 			"status": status,
-		}).Warning("njuskalo returned 400 bad request")
+			"url":    urlWithPage,
+		}).Warning("fetching from njuskalo")
 		return nil, ErrBadRequest
 	}
 
 	if strings.Contains(status, "404") {
+		logrus.WithFields(logrus.Fields{
+			"status": status,
+			"url":    urlWithPage,
+		}).Warning("fetching from njuskalo")
 		return items, nil
 	}
 
 	if error != nil {
 		return nil, error
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"status": status,
+		"url":    urlWithPage,
+	}).Info("fetching from njuskalo")
 
 	doc, err := goquery.NewDocumentFromReader(body)
 
@@ -106,4 +120,15 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 	})
 
 	return items, nil
+}
+
+func buildURL(base string, page int) (string, error) {
+	u, err := url.Parse(base)
+	if err != nil {
+		return "", err
+	}
+	q := u.Query()
+	q.Add("page", fmt.Sprint(page))
+	u.RawQuery = q.Encode()
+	return u.String(), nil
 }

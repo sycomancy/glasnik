@@ -36,7 +36,7 @@ type tokenEntry struct {
 func (t *tokenValidatorService) ValidateToken(request types.RequestData) error {
 	token := request.Token
 	if token == "" {
-		return fmt.Errorf("param: token is required")
+		return fmt.Errorf("missing  required parameter: token")
 	}
 
 	var tokenEntry tokenEntry

@@ -19,21 +19,28 @@ type AdsFetcher interface {
 type adsFetcher struct{}
 
 func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) (types.RequestResult, error) {
-	result, err := njuskalo.Fetch(request.Filter, ic)
-	if err != nil {
-		fmt.Print(result)
+	response := types.RequestResult{}
+	isSyncRequest := request.CallbackURL == ""
+
+	if isSyncRequest {
+		result, err := njuskalo.Fetch(request.Filter, ic)
+		if err != nil {
+			fmt.Print(result)
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"count":  len(result),
+			"filter": request.Filter,
+		}).Info("results from njuskalo")
+
+		response = types.RequestResult{
+			Data:        result,
+			CallbackURL: request.CallbackURL,
+			Status:      "success",
+		}
+
+		return response, nil
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"count":  len(result),
-		"filter": request.Filter,
-	}).Info("results from njuskalo")
-
-	response := types.RequestResult{
-		Data:        result,
-		CallbackURL: request.CallbackURL,
-		Status:      "success",
-	}
-
-	return response, nil
+	return response, fmt.Errorf("async  requests not supported")
 }
