@@ -1,7 +1,7 @@
 package types
 
 // Actual result from web scrapping
-type AdsPageResponse struct {
+type AdEntry struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
 	Link  string `json:"link"`
@@ -19,13 +19,15 @@ type RequestDataDTO struct {
 // Result for data fetching request
 // Data should be available is request is sync
 type RequestResult struct {
-	Data        []AdsPageResponse
-	Status      string
-	CallbackURL string
+	Data        []AdEntry `json:"data"`
+	Status      string    `json:"status"`
+	CallbackURL string    `json:"callbackUrl,omitempty"`
 }
 
 // Service input param, maybe remove from public types
 type RequestData struct {
-	RequestDataDTO
-	RequestID string
+	Filter      string
+	Token       string
+	CallbackURL string
+	RequestID   int
 }

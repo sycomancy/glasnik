@@ -12,13 +12,13 @@ import (
 
 // AdsFetcher is an interface that can fetch a ads
 type AdsFetcher interface {
-	ProcessRequest(context.Context, *infra.IncognitoClient, types.RequestData) ([]types.AdsPageResponse, error)
+	ProcessRequest(context.Context, *infra.IncognitoClient, types.RequestData) (types.RequestResult, error)
 }
 
 // priceFetcher implements an interface
 type adsFetcher struct{}
 
-func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) ([]types.AdsPageResponse, error) {
+func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) (types.RequestResult, error) {
 	result, err := njuskalo.Fetch(request.Filter, ic)
 	if err != nil {
 		fmt.Print(result)
@@ -29,5 +29,11 @@ func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClie
 		"filter": request.Filter,
 	}).Info("results from njuskalo")
 
-	return result, nil
+	response := types.RequestResult{
+		Data:        result,
+		CallbackURL: request.CallbackURL,
+		Status:      "success",
+	}
+
+	return response, nil
 }

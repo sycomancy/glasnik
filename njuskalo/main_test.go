@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/damjackk/njufetch/infra"
+	"github.com/sycomancy/glasnik/infra"
 )
 
 var urls = []string{"", "", ""}

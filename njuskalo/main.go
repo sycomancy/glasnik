@@ -18,8 +18,8 @@ var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
 
-func Fetch(url string, client *infra.IncognitoClient) ([]types.AdsPageResponse, error) {
-	items := make([]types.AdsPageResponse, 0)
+func Fetch(url string, client *infra.IncognitoClient) ([]types.AdEntry, error) {
+	items := make([]types.AdEntry, 0)
 
 	hasMorePage := true
 	page := 1
@@ -47,7 +47,7 @@ func Fetch(url string, client *infra.IncognitoClient) ([]types.AdsPageResponse, 
 	return items, nil
 }
 
-func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdsPageResponse, error) {
+func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 	urlWithPage := url
 
 	if page != 1 {
@@ -56,7 +56,7 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 
 	status, body, error := client.GetURLDataWithRetries(urlWithPage, headers)
 	// Find review items
-	items := []types.AdsPageResponse{}
+	items := []types.AdEntry{}
 
 	if status == ErrBadRequest.Error() {
 		// TODO(sycomancy): handle 400 BAD REQUEST!!!
@@ -101,7 +101,7 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 			link = "https://njuskalo.hr" + hrefAttr
 		}
 
-		item := types.AdsPageResponse{Id: id, Title: title, Link: link, Price: price}
+		item := types.AdEntry{Id: id, Title: title, Link: link, Price: price}
 		items = append(items, item)
 	})
 
