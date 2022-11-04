@@ -21,6 +21,7 @@ type adsFetcher struct{}
 func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) (types.RequestResult, error) {
 	response := types.RequestResult{}
 	isSyncRequest := request.CallbackURL == ""
+	requestId := ctx.Value("requestID").(int)
 
 	if isSyncRequest {
 		result, err := njuskalo.Fetch(request.Filter, ic)
@@ -37,6 +38,7 @@ func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClie
 			Data:        result,
 			CallbackURL: request.CallbackURL,
 			Status:      "success",
+			RequestID:   requestId,
 		}
 
 		return response, nil

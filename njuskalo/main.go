@@ -83,11 +83,6 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 		return nil, error
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"status": status,
-		"url":    urlWithPage,
-	}).Info("fetching from njuskalo")
-
 	doc, err := goquery.NewDocumentFromReader(body)
 
 	if err != nil {

@@ -22,6 +22,7 @@ type RequestResult struct {
 	Data        []AdEntry `json:"data"`
 	Status      string    `json:"status"`
 	CallbackURL string    `json:"callbackUrl,omitempty"`
+	RequestID   int       `json:"requestId"`
 }
 
 // Service input param, maybe remove from public types
