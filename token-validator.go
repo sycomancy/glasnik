@@ -17,6 +17,6 @@ func NewTokenValidatorService(next AdsFetcher) AdsFetcher {
 	}
 }
 
-func (t *tokenValidatorService) FetchAds(ctx context.Context, ic *infra.IncognitoClient, url string) ([]types.AdsPageResponse, error) {
-	return t.next.FetchAds(ctx, ic, url)
+func (t *tokenValidatorService) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) ([]types.AdsPageResponse, error) {
+	return t.next.ProcessRequest(ctx, ic, request)
 }

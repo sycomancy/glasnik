@@ -97,7 +97,8 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 		}
 
 		if exists {
-			link = hrefAttr
+			// TODO(sycomancy): add this to connfig
+			link = "https://njuskalo.hr" + hrefAttr
 		}
 
 		item := types.AdsPageResponse{Id: id, Title: title, Link: link, Price: price}

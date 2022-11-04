@@ -12,21 +12,21 @@ import (
 
 // AdsFetcher is an interface that can fetch a ads
 type AdsFetcher interface {
-	FetchAds(context.Context, *infra.IncognitoClient, string) ([]types.AdsPageResponse, error)
+	ProcessRequest(context.Context, *infra.IncognitoClient, types.RequestData) ([]types.AdsPageResponse, error)
 }
 
 // priceFetcher implements an interface
 type adsFetcher struct{}
 
-func (a *adsFetcher) FetchAds(ctx context.Context, ic *infra.IncognitoClient, url string) ([]types.AdsPageResponse, error) {
-	result, err := njuskalo.Fetch(url, ic)
+func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) ([]types.AdsPageResponse, error) {
+	result, err := njuskalo.Fetch(request.Filter, ic)
 	if err != nil {
 		fmt.Print(result)
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"count": len(result),
-		"url":   url,
+		"count":  len(result),
+		"filter": request.Filter,
 	}).Info("results from njuskalo")
 
 	return result, nil

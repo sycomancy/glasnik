@@ -28,8 +28,7 @@ func NewJSONAPIServer(listenAddr string, svc AdsFetcher) *JSONAPIServer {
 }
 
 func (s *JSONAPIServer) Run() {
-	http.HandleFunc("/api", makeHTTPHandlerFunc(s.handleFetchAds))
-	http.HandleFunc("/api/fetch-njuska", makeHTTPHandlerFunc(s.handleFetchAdsPOST))
+	http.HandleFunc("/api/request-njuska", makeHTTPHandlerFunc(s.handleFetchAdsPOST))
 	http.ListenAndServe(s.listenAddr, nil)
 }
 
@@ -43,23 +42,11 @@ func makeHTTPHandlerFunc(apiFunc APIFunc) http.HandlerFunc {
 	}
 }
 
-func (s *JSONAPIServer) handleFetchAds(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	// TODO(sycomancy): parse url from request
-	url := r.URL.Query().Get("filter")
-	data, err := s.svc.FetchAds(ctx, s.ic, url)
-	if err != nil {
-		return err
-	}
-
-	return writeJSON(w, http.StatusOK, &data)
-}
-
 func (s *JSONAPIServer) handleFetchAdsPOST(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	var requestData types.RequestData
+	var requestData types.RequestDataDTO
 	if r.Method != http.MethodPost {
 		return fmt.Errorf("unsupported method")
 	}
-
 	err := json.NewDecoder(r.Body).Decode(&requestData)
 	if err != nil {
 		return fmt.Errorf("unable to decode body")

@@ -19,14 +19,14 @@ func NewLoggingService(next AdsFetcher) AdsFetcher {
 	}
 }
 
-func (l *loggingService) FetchAds(ctx context.Context, ic *infra.IncognitoClient, url string) ([]types.AdsPageResponse, error) {
+func (l *loggingService) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) ([]types.AdsPageResponse, error) {
 	defer func(begin time.Time) {
 		logrus.WithFields(logrus.Fields{
 			"requestID": ctx.Value("requestID"),
 			"took":      time.Since(begin),
-			"url":       url,
+			"filter":    request.Filter,
 		}).Info("fetchAds")
 	}(time.Now())
 
-	return l.next.FetchAds(ctx, ic, url)
+	return l.next.ProcessRequest(ctx, ic, request)
 }
