@@ -2,8 +2,8 @@ package infra
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,10 +18,14 @@ func MongoConnect(uri string) error {
 	var err error
 	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		fmt.Println("Failed to connect to MongoDb")
+		logrus.WithFields(logrus.Fields{
+			"db uri": uri,
+		}).Panic("failed connecting to db")
 		return err
 	} else {
-		fmt.Println("Connected to MongoDb")
+		logrus.WithFields(logrus.Fields{
+			"db uri": uri,
+		}).Info("connected to db")
 		return nil
 	}
 }
@@ -29,6 +33,7 @@ func MongoConnect(uri string) error {
 func FindDocument[T any](collection string, filter bson.D, result *T) *T {
 	coll := client.Database(dbName).Collection(collection)
 	err := coll.FindOne(context.TODO(), filter).Decode(&result)
+
 	if err == mongo.ErrNoDocuments {
 		return nil
 	}
