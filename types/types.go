@@ -19,7 +19,7 @@ type RequestDataDTO struct {
 // Result for data fetching request
 // Data should be available is request is sync
 type RequestResult struct {
-	Data        []AdEntry `json:"data"`
+	Data        []AdEntry `json:"data,omitempty"`
 	Status      string    `json:"status"`
 	CallbackURL string    `json:"callbackUrl,omitempty"`
 	RequestID   int       `json:"requestId"`

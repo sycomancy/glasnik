@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/sycomancy/glasnik/infra"
 	"github.com/sycomancy/glasnik/njuskalo"
 	"github.com/sycomancy/glasnik/types"
@@ -20,29 +21,26 @@ type adsFetcher struct{}
 
 func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) (types.RequestResult, error) {
 	response := types.RequestResult{}
-	isSyncRequest := request.CallbackURL == ""
 	requestId := ctx.Value("requestID").(int)
 
-	if isSyncRequest {
-		result, err := njuskalo.Fetch(request.Filter, ic)
-		if err != nil {
-			fmt.Print(result)
-		}
-
-		logrus.WithFields(logrus.Fields{
-			"count":  len(result),
-			"filter": request.Filter,
-		}).Info("results from njuskalo")
-
-		response = types.RequestResult{
-			Data:        result,
-			CallbackURL: request.CallbackURL,
-			Status:      "success",
-			RequestID:   requestId,
-		}
-
-		return response, nil
+	result, err := njuskalo.Fetch(request.Filter, ic)
+	if err != nil {
+		fmt.Print(result)
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"count":  len(result),
+		"filter": request.Filter,
+	}).Info("results from njuskalo")
+
+	response = types.RequestResult{
+		Data:        result,
+		CallbackURL: request.CallbackURL,
+		Status:      "success",
+		RequestID:   requestId,
+	}
+
+	return response, nil
 
 	return response, fmt.Errorf("async  requests not supported")
 }

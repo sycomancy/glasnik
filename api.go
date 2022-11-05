@@ -14,16 +14,18 @@ import (
 type APIFunc func(context.Context, http.ResponseWriter, *http.Request) error
 
 type JSONAPIServer struct {
-	listenAddr string
-	svc        AdsFetcher
-	ic         *infra.IncognitoClient
+	listenAddr      string
+	svc             AdsFetcher
+	ic              *infra.IncognitoClient
+	asyncDispatcher *infra.Dispatcher
 }
 
 func NewJSONAPIServer(listenAddr string, svc AdsFetcher) *JSONAPIServer {
 	return &JSONAPIServer{
-		listenAddr: listenAddr,
-		svc:        svc,
-		ic:         infra.NewIncognitoClient(nil),
+		listenAddr:      listenAddr,
+		svc:             svc,
+		ic:              infra.NewIncognitoClient(nil),
+		asyncDispatcher: infra.NewDispatcher(),
 	}
 }
 
@@ -54,18 +56,42 @@ func (s *JSONAPIServer) handleFetch(ctx context.Context, w http.ResponseWriter, 
 	}
 
 	requestId := ctx.Value("requestID").(int)
-	data, err := s.svc.ProcessRequest(ctx, s.ic, types.RequestData{
+
+	request := types.RequestData{
 		Filter:      requestData.Filter,
 		Token:       requestData.Token,
 		CallbackURL: requestData.CallbackURL,
 		RequestID:   requestId,
-	})
+	}
+
+	if requestData.CallbackURL != "" {
+		response := types.RequestResult{
+			Status:      "success",
+			CallbackURL: requestData.CallbackURL,
+			RequestID:   requestId,
+		}
+
+		go func(request types.RequestData) {
+			result, err := s.svc.ProcessRequest(ctx, s.ic, request)
+
+			if err != nil {
+				// TODO what to do here?
+				return
+			}
+
+			s.asyncDispatcher.Dispatch(result)
+		}(request)
+
+		return writeJSON(w, http.StatusAccepted, response)
+	}
+
+	response, err := s.svc.ProcessRequest(ctx, s.ic, request)
 
 	if err != nil {
 		return err
 	}
 
-	return writeJSON(w, http.StatusOK, data)
+	return writeJSON(w, http.StatusOK, response)
 }
 
 func writeJSON(w http.ResponseWriter, s int, v any) error {
