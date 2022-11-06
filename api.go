@@ -45,7 +45,7 @@ func makeHTTPHandlerFunc(apiFunc APIFunc) http.HandlerFunc {
 }
 
 func (s *JSONAPIServer) handleFetch(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	var requestData types.RequestDataDTO
+	var requestData types.Request
 	if r.Method != http.MethodPost {
 		return fmt.Errorf("unsupported method")
 	}

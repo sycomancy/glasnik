@@ -10,7 +10,7 @@ type AdEntry struct {
 
 // Request for data fetching.
 // If Callback is provided, result will be delivered async with PUT on callback URL
-type RequestDataDTO struct {
+type Request struct {
 	Filter      string `json:"filter"`
 	Token       string `json:"token"`
 	CallbackURL string `json:"callbackUrl"`

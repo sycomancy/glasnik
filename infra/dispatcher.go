@@ -18,7 +18,7 @@ func NewDispatcher() *Dispatcher {
 
 func (d *Dispatcher) Dispatch(data types.RequestResult) error {
 	logCtx := logrus.WithFields(logrus.Fields{
-		"callbackURL": data.CallbackURL,
+		"callbackUrl": data.CallbackURL,
 		"requestID":   data.RequestID,
 	})
 
@@ -34,6 +34,8 @@ func (d *Dispatcher) Dispatch(data types.RequestResult) error {
 		logCtx.Error("dispatcher: unable to dispatch results")
 		return error
 	}
+
+	logCtx.Info("sending results")
 
 	return nil
 }
