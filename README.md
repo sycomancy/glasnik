@@ -1,6 +1,6 @@
 ### TODO
 
 - [x] fix bug with paging
-- [] call webhook if callbackURL provided
-- [] implement client package
+- [x] call webhook if callbackURL provided
+- [x] implement client package
 - [] parse price

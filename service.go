@@ -41,6 +41,4 @@ func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClie
 	}
 
 	return response, nil
-
-	return response, fmt.Errorf("async  requests not supported")
 }

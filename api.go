@@ -36,8 +36,8 @@ func (s *JSONAPIServer) Run() {
 
 func makeHTTPHandlerFunc(apiFunc APIFunc) http.HandlerFunc {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "requestID", rand.Intn(10000000))
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx = context.WithValue(ctx, "requestID", rand.Intn(10000000))
 		if err := apiFunc(ctx, w, r); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
 		}
