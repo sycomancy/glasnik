@@ -10,13 +10,7 @@ import (
 	"github.com/sycomancy/glasnik/types"
 )
 
-type Dispatcher struct{}
-
-func NewDispatcher() *Dispatcher {
-	return &Dispatcher{}
-}
-
-func (d *Dispatcher) Dispatch(data types.RequestResult) error {
+func Dispatch(data types.RequestResult) error {
 	logCtx := logrus.WithFields(logrus.Fields{
 		"callbackUrl": data.CallbackURL,
 		"requestID":   data.RequestID,

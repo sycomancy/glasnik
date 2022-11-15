@@ -23,7 +23,29 @@ func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClie
 	response := types.RequestResult{}
 	requestId := ctx.Value("requestID").(int)
 
+	if request.CallbackURL != "" {
+		response := types.RequestResult{
+			Status:      "success",
+			CallbackURL: request.CallbackURL,
+			RequestID:   requestId,
+		}
+
+		go func(request types.RequestData) {
+			result, err := njuskalo.Fetch(request.Filter, ic)
+			if err != nil {
+				// TODO what to do here?
+				return
+			}
+
+			response.Data = result
+
+			infra.Dispatch(response)
+		}(request)
+
+		return response, nil
+	}
 	result, err := njuskalo.Fetch(request.Filter, ic)
+
 	if err != nil {
 		fmt.Print(result)
 	}
