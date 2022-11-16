@@ -53,7 +53,7 @@ func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClie
 	logrus.WithFields(logrus.Fields{
 		"count":  len(result),
 		"filter": request.Filter,
-	}).Info("results from njuskalo")
+	}).Info("got results from njuskalo")
 
 	response = types.RequestResult{
 		Data:        result,

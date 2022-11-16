@@ -68,7 +68,7 @@ func CountDocuments(collection string, filter bson.D) int64 {
 	return count
 }
 
-func InsertDocument(collection string, document any) (*mongo.InsertOneResult, error) {
+func InsertDocument(collection string, document bson.D) (*mongo.InsertOneResult, error) {
 	coll := client.Database(dbName).Collection(collection)
 	result, err := coll.InsertOne(context.TODO(), document)
 	if err != nil {

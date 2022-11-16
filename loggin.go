@@ -20,12 +20,17 @@ func NewLoggingService(next AdsFetcher) AdsFetcher {
 }
 
 func (l *loggingService) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) (types.RequestResult, error) {
+	logrus.WithFields(logrus.Fields{
+		"filter":    request.Filter,
+		"requestID": ctx.Value("requestID"),
+	}).Info("request start")
+
 	defer func(begin time.Time) {
 		logrus.WithFields(logrus.Fields{
 			"requestID": ctx.Value("requestID"),
 			"took":      time.Since(begin),
 			"filter":    request.Filter,
-		}).Info("fetchAds")
+		}).Info("request end")
 	}(time.Now())
 
 	return l.next.ProcessRequest(ctx, ic, request)
