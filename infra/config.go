@@ -14,13 +14,15 @@ func LoadConfig() {
 		panic("Failed to load environment variables.")
 	} else {
 		Config = config{
-			DB_URL: os.Getenv("DB_URL"),
+			DB_URL:  os.Getenv("DB_URL"),
+			TOR_URL: os.Getenv("TOR_URL"),
 		}
 	}
 }
 
 type config struct {
-	DB_URL string
+	DB_URL  string
+	TOR_URL string
 }
 
 var Config config

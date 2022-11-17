@@ -5,7 +5,14 @@ services:
   app:
     build: 
      context: ./
-  mongo:
+    ports:
+      - 3000:3000
+
+  tor:
+    image: osminogin/tor-simple
+    restart: always
+    
+  mongodb:
     image: mongo
     restart: always
     ports:
@@ -22,4 +29,4 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongodb:27017/

@@ -155,7 +155,7 @@ func torProxy() func(*http.Request) (*url.URL, error) {
 
 	// Tor listens for SOCKS connections on localhost port 9050
 	// TODO(sycomancy: read this from env variable
-	base := "socks5://%d:x@127.0.0.1:9050"
+	base := "socks5://%d:x@" + Config.TOR_URL
 	// Proxy url with random credentials
 	rawUrl := fmt.Sprintf(base, num)
 	// Parse proxy url
