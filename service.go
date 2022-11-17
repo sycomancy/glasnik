@@ -17,7 +17,8 @@ type AdsFetcher interface {
 }
 
 // priceFetcher implements an interface
-type adsFetcher struct{}
+type adsFetcher struct {
+}
 
 func (a *adsFetcher) ProcessRequest(ctx context.Context, ic *infra.IncognitoClient, request types.RequestData) (types.RequestResult, error) {
 	response := types.RequestResult{}

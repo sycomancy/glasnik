@@ -11,6 +11,12 @@ import (
 	"github.com/sycomancy/glasnik/types"
 )
 
+type tokenEntry struct {
+	Token           string `bson:"token,omitempty"`
+	RequestCount    string `bson:"requestCount,omitempty"`
+	AllowedRequests string `bson:"allowedRequests,omitempty"`
+}
+
 type tokenValidatorService struct {
 	next AdsFetcher
 }
@@ -29,18 +35,13 @@ func (t *tokenValidatorService) ProcessRequest(ctx context.Context, ic *infra.In
 	return t.next.ProcessRequest(ctx, ic, request)
 }
 
-type tokenEntry struct {
-	Token string `bson:"token,omitempty"`
-}
-
 func (t *tokenValidatorService) ValidateToken(request types.RequestData) error {
 	token := request.Token
 	if token == "" {
 		return fmt.Errorf("missing  required parameter: token")
 	}
 
-	var tokenEntry tokenEntry
-	infra.FindDocument("tokens", bson.D{{Key: "token", Value: request.Token}}, &tokenEntry)
+	tokenEntry := FindToken(request.Token)
 
 	if tokenEntry.Token != token {
 		logrus.WithFields(logrus.Fields{
@@ -50,5 +51,19 @@ func (t *tokenValidatorService) ValidateToken(request types.RequestData) error {
 		return fmt.Errorf("invalid token provided %s", token)
 	}
 
+	return nil
+}
+
+func FindToken(token string) tokenEntry {
+	var tokenEntry tokenEntry
+	infra.FindDocument("tokens", bson.D{{Key: "token", Value: token}}, &tokenEntry)
+	return tokenEntry
+}
+
+func UpdateResultsForToken(token string, response types.RequestResult) error {
+	tokenEntry := FindToken(token)
+	if tokenEntry.Token != "" {
+		return nil
+	}
 	return nil
 }
