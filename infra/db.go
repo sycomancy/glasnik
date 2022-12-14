@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -68,7 +69,7 @@ func CountDocuments(collection string, filter bson.D) int64 {
 	return count
 }
 
-func InsertDocument(collection string, document any) (*mongo.InsertOneResult, error) {
+func InsertDocument(collection string, document types.AdEntry) (*mongo.InsertOneResult, error) {
 	coll := client.Database(dbName).Collection(collection)
 	result, err := coll.InsertOne(context.TODO(), document)
 	if err != nil {
@@ -78,9 +79,9 @@ func InsertDocument(collection string, document any) (*mongo.InsertOneResult, er
 	return result, nil
 }
 
-func InsertDocuments(collection string, documents []interface{}) *mongo.InsertManyResult {
+func InsertDocuments(collection string, entries []interface{}) *mongo.InsertManyResult {
 	coll := client.Database(dbName).Collection(collection)
-	result, err := coll.InsertMany(context.TODO(), documents)
+	result, err := coll.InsertMany(context.TODO(), entries)
 	if err != nil {
 		panic(err)
 	}

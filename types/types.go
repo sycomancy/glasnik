@@ -2,10 +2,10 @@ package types
 
 // Actual result from web scrapping
 type AdEntry struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
-	Link  string `json:"link"`
-	Price string `json:"price"`
+	Id    string `json:"id" bson:"id"`
+	Title string `json:"title" bson:"title,omitempty"`
+	Link  string `json:"link" bson:"link,omitempty"`
+	Price string `json:"price" bson:"price,omitempty"`
 }
 
 // Request for data fetching.
