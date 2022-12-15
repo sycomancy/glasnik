@@ -1,6 +1,6 @@
-### TODO
+## TODO
 
-- [x] fix bug with paging
-- [x] call webhook if callbackURL provided
-- [x] implement client package
-- [] parse price
+### Get all geolocations for
+
+https://www.njuskalo.hr/ccapi/v2/locality?filter%5Bparent%5D=1153
+2791

@@ -19,7 +19,7 @@ type aggregator struct {
 }
 
 func (a *aggregator) FetchAndPersist(filters []string) {
-	results, err := njuskalo.Fetch(filter, a.client)
+	results, err := njuskalo.FetchAds(filter, a.client)
 	if err != nil {
 		logg.Error(err)
 	}

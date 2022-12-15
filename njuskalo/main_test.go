@@ -13,7 +13,7 @@ func TestFetchItemsForNjuska(t *testing.T) {
 	client := infra.NewIncognitoClient(nil)
 
 	for _, url := range urls {
-		result, err := Fetch(url, client)
+		result, err := FetchAds(url, client)
 
 		if err != nil {
 			t.Error(err)
