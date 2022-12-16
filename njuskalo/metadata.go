@@ -7,12 +7,12 @@ import (
 	"github.com/sycomancy/glasnik/infra"
 )
 
-// TODO(sycomancy): change this
-var BearerToken string = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJuanVza2Fsb19qc19hcHAiLCJqdGkiOiJlODg4ZjIwODllMTdhY2ZmMjEyMzc2YWU1M2U4Yzg5ZjUzZTBiOWIzMDhkOWEwM2U1YjFlYmMwOGNiZTFkMmFkOTAxOWQ4YTU0MDMzNjI0MCIsImlhdCI6MTY3MTEzMDM3MSwibmJmIjoxNjcxMTMwMzcxLCJleHAiOjE2NzExNTE5NzEsInN1YiI6IiIsInNjb3BlcyI6W119.elcUlwKPT0qvMN6M4eCfKsXPZRaJF2MvYCMqsntacD3yqOXwrNaC240Vuu6Xje3jCzCPJ16D-Na8zOouFgkU7AgKgd4azd7feVJSEq7Dc5Bjmz_14qBMYH5SZISxsMFdL00ZbYmgE0I2v7vTFCeeLIQ5nABhZlvdfwrPAOyQ67Z6Zf0t3rA0W9jYx0LKtlVSPMnZX0NkHxz3xLoy3hooABqLPn3GgwcBtytTToP6UJef_EQgtMn3eFvNPFpv6QESUdkA1cYmE9cbu8sx2XIc1REtNoHItZNRfH2HNQ0DcAnHqu7F8rV1guUd2Y3EoWwjzU_0pcO51vBHPaxPSAI1pQ"
-
-var headersForLocality = map[string]string{
-	"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
-	"authorization": BearerToken,
+func headersForLocality() map[string]string {
+	return map[string]string{
+		"content-type":  "application/vnd.api+json",
+		"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+		"authorization": fmt.Sprintf("Bearer %s", infra.Config.NJUSKALO_BEARER_TOKEN),
+	}
 }
 
 type LocalityEntry struct {
@@ -55,7 +55,7 @@ func (m *NjuskaloMeta) fetchLocalityMeta(locationIds []int) (*LocalityResponse, 
 	for _, id := range locationIds {
 		url += fmt.Sprint(id)
 	}
-	_, body, err := m.client.GetURLData(url, headersForLocality)
+	_, body, err := m.client.GetURLData(url, headersForLocality())
 	if err != nil {
 		return &LocalityResponse{}, err
 	}
