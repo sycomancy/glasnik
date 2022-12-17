@@ -16,7 +16,7 @@ func headersForLocality() map[string]string {
 }
 
 type LocalityEntry struct {
-	Id         string `json:"id"`
+	Id         string `json:"id,omitempty" bson:"_id"`
 	Attributes struct {
 		Title string `json:"title"`
 	}
@@ -36,25 +36,30 @@ func NewNjuskaloMeta(client *infra.IncognitoClient) *NjuskaloMeta {
 	}
 }
 
-func (m *NjuskaloMeta) RebuildLocalityMeta(locationIds []int) (*LocalityResponse, error) {
-	data, err := m.fetchLocalityMeta(locationIds)
+func (m *NjuskaloMeta) RebuildLocalityMeta(rootLocationId []string) error {
+	data, err := m.fetchLocalityMeta(rootLocationId)
 	if err != nil {
-		return &LocalityResponse{}, err
+		return err
 	}
 
 	entries := make([]interface{}, len(data.Data))
 	for i := range data.Data {
 		entries[i] = data.Data[i]
 	}
+
+	fmt.Printf("inserting %d new locality entries \n", len(entries))
+
 	_ = infra.InsertDocuments("locality", entries)
-	return data, nil
+
+	return nil
 }
 
-func (m *NjuskaloMeta) fetchLocalityMeta(locationIds []int) (*LocalityResponse, error) {
+func (m *NjuskaloMeta) fetchLocalityMeta(locationIds []string) (*LocalityResponse, error) {
 	url := "https://www.njuskalo.hr/ccapi/v2/locality?filter[parent]="
 	for _, id := range locationIds {
-		url += fmt.Sprint(id)
+		url += fmt.Sprintf("%s,", id)
 	}
+	fmt.Println(url, locationIds)
 	_, body, err := m.client.GetURLData(url, headersForLocality())
 	if err != nil {
 		return &LocalityResponse{}, err
