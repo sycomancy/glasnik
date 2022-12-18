@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sycomancy/glasnik/types"
@@ -48,6 +49,7 @@ func FindDocument[T any](collection string, filter bson.D, result *T) *T {
 func FindDocuments[T any](collection string, filter bson.D, result []*T) []*T {
 	coll := client.Database(dbName).Collection(collection)
 	curr, err := coll.Find(context.TODO(), filter)
+	fmt.Println(coll.CountDocuments(context.TODO(), filter))
 	if err == mongo.ErrNoDocuments {
 		return nil
 	}
