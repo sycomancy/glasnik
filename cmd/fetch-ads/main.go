@@ -18,9 +18,11 @@ func main() {
 	infra.LoadConfig()
 	infra.MongoConnect(infra.Config.DB_URL)
 
-	locations := make([]*njuskalo.LocalityEntry, 0)
-	infra.FindDocuments("locality", bson.D{}, locations)
-	fmt.Println(locations)
+	var locations []*njuskalo.LocalityEntry
+	infra.FindDocuments("locality", bson.D{{"_id", "2656"}}, &locations)
+	for _, loc := range locations {
+		fmt.Println(loc.Attributes.Title)
+	}
 }
 
 // var filter = "https://www.njuskalo.hr/prodaja-stanova/zagreb"
