@@ -11,6 +11,8 @@ import (
 	"github.com/sycomancy/glasnik/types"
 )
 
+var hostname = "https://njuskalo.hr/nekretnine/"
+
 const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .EntityList-item.EntityList-item--Regular"
 const entityTitleQuery = ".entity-title a"
 const entityPriceQuery = ".price-item > .price"
@@ -18,6 +20,11 @@ const entityPriceQuery = ".price-item > .price"
 var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
+
+func FetchAd(slug string, client *infra.IncognitoClient) (types.AdDetails, error) {
+	urlWithSlug := fmt.Sprintf("%s%s", hostname, slug)
+	// status, body, error := client.GetURLDataWithRetries(urlWithSlug, headers)
+}
 
 func FetchAds(url string, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 	items := make([]types.AdEntry, 0)

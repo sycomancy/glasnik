@@ -25,31 +25,20 @@ func main() {
 	}
 }
 
-// var filter = "https://www.njuskalo.hr/prodaja-stanova/zagreb"
+// func main() {
+// 	worker := NewWorker(10)
 
-// type aggregator struct {
-// 	client *infra.IncognitoClient
-// }
+// worker.Produce(func(producerStream chan<- int, stopFn func()) {
+// 			for i := 0; i < 5; i++ {
+// 					producerStream <- i
+// 			}
 
-// func (a *aggregator) FetchAndPersist(filters []string) {
-// 	results, err := njuskalo.FetchAds(filter, a.client)
-// 	if err != nil {
-// 		logg.Error(err)
-// 	}
+// 			stopFn()
+// 	})
 
-// 	a.persist(results)
-// 	logg.Info("got: ", len(results), " results for filter: ", filter)
-// }
+// worker.Consume(func(val int) {
+// 	fmt.Printf("Consumer is processing %d\n", val)
+// })
 
-// func (a *aggregator) persist(results []types.AdEntry) {
-// 	entries := make([]interface{}, len(results))
-// 	for i := range results {
-// 		entries[i] = results[i]
-// 	}
-// 	_ = infra.InsertDocuments("results", entries)
-// }
-
-// func Run() {
-// 	aggregator := &aggregator{client: infra.NewIncognitoClient(nil)}
-// 	aggregator.FetchAndPersist([]string{filter})
+// 	worker.Wait(nil)
 // }

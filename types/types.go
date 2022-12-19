@@ -1,5 +1,10 @@
 package types
 
+type AdDetails struct {
+	Size  int `json:"size" bson:"size"`
+	Rooms int `json:"rooms" bson:"rooms"`
+}
+
 // Actual result from web scrapping
 type AdEntry struct {
 	Id    string `json:"id" bson:"id"`
