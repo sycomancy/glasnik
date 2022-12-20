@@ -105,7 +105,7 @@ func (t *IncognitoClient) GetURLData(url string, headers map[string]string) (sta
 			panic("Unable to connect to tor. Please check if tor client is running.")
 		}
 
-		logrus.Panic("somethingggggg", res)
+		logrus.Panic("somethingggggg", res, err, url)
 		return res.Status, nil, err
 	}
 
@@ -127,13 +127,8 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 			break
 		}
 
-		logrus.WithFields(logrus.Fields{
-			"status":   status,
-			"retry in": backoff,
-		}).Warn("http-client handle error with retry")
-
-		t.tor.newIp()
 		time.Sleep(backoff)
+		t.tor.newIp()
 	}
 
 	// All retries failed

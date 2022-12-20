@@ -21,10 +21,10 @@ var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
 
-func FetchAd(slug string, client *infra.IncognitoClient) (types.AdDetails, error) {
-	urlWithSlug := fmt.Sprintf("%s%s", hostname, slug)
-	// status, body, error := client.GetURLDataWithRetries(urlWithSlug, headers)
-}
+// func FetchAd(slug string, client *infra.IncognitoClient) (types.AdDetails, error) {
+// 	urlWithSlug := fmt.Sprintf("%s%s", hostname, slug)
+// 	// status, body, error := client.GetURLDataWithRetries(urlWithSlug, headers)
+// }
 
 func FetchAds(url string, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 	items := make([]types.AdEntry, 0)
