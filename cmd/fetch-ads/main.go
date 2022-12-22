@@ -25,7 +25,9 @@ func main() {
 
 	var locations []*njuskalo.LocalityEntry
 	infra.FindDocuments("locality", bson.D{}, &locations)
-	worker := infra.NewWorker[*njuskalo.LocalityEntry](13)
+	worker := infra.NewWorker[*njuskalo.LocalityEntry](2)
+
+	logg.Infof("Started work for %d locations \n", len(locations))
 
 	worker.Produce(func(producerStream chan<- *njuskalo.LocalityEntry, stopFn func()) {
 		for _, loc := range locations {
@@ -33,6 +35,8 @@ func main() {
 		}
 		stopFn()
 	})
+
+	numOfFailed := 0
 
 	worker.Consume(func(val *njuskalo.LocalityEntry) {
 		fullURL := fmt.Sprintf("%s%s", baseURL, val.Id)
@@ -42,6 +46,7 @@ func main() {
 		ads, err := njuskalo.FetchAds(fullURL, client)
 		if err != nil {
 			logg.Warnf("failed to get data for location %s %w", val.Attributes.Title, err)
+			numOfFailed += 1
 		}
 
 		if len(ads) == 0 {
@@ -51,5 +56,7 @@ func main() {
 		logg.Infof("got %d ads for %s \n", len(ads), val.Attributes.Title)
 	})
 
-	worker.Wait(nil)
+	worker.Wait(func(data *njuskalo.LocalityEntry) {
+		fmt.Printf("Work done. Failed jobs for %d locations", numOfFailed)
+	})
 }

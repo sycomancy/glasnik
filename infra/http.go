@@ -76,8 +76,8 @@ func NewIncognitoClient(backoffSchedule BackoffSchedule) *IncognitoClient {
 	}
 
 	t.tor = &tor{
-		MaxTimeout:         20 * time.Second,
-		MaxIdleConnections: 10,
+		MaxTimeout:         30 * time.Second,
+		MaxIdleConnections: 20,
 	}
 
 	t.client = t.tor.new()
@@ -89,7 +89,6 @@ func (t *IncognitoClient) GetURLData(url string, headers map[string]string) (sta
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
-		// TODO(sycomancy): handle this
 		fmt.Print("Unable to create request", err)
 		return "unknown", nil, err
 	}
@@ -102,11 +101,12 @@ func (t *IncognitoClient) GetURLData(url string, headers map[string]string) (sta
 
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {
-			panic("Unable to connect to tor. Please check if tor client is running.")
+			logrus.Error("Connection refused from tor")
+			return "", nil, err
 		}
 
-		logrus.Panic("somethingggggg", res, err, url)
-		return res.Status, nil, err
+		logrus.Errorf("Unknown error from tor", err)
+		return "", nil, err
 	}
 
 	body = res.Body
@@ -126,7 +126,7 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 		if err == nil && status != "400 Bad Request" {
 			break
 		}
-
+		fmt.Printf("Backing offf for %s \n", url)
 		time.Sleep(backoff)
 		t.tor.newIp()
 	}
