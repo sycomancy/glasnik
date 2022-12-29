@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/sirupsen/logrus"
-	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -69,7 +68,7 @@ func CountDocuments(collection string, filter bson.D) int64 {
 	return count
 }
 
-func InsertDocument(collection string, document types.AdEntry) (*mongo.InsertOneResult, error) {
+func InsertDocument(collection string, document interface{}) (*mongo.InsertOneResult, error) {
 	coll := client.Database(dbName).Collection(collection)
 	result, err := coll.InsertOne(context.TODO(), document)
 	if err != nil {
@@ -106,6 +105,23 @@ func UpdateDocuments(collection string, filter bson.D, update bson.D) *mongo.Upd
 	return result
 }
 
+func UpsertDocument(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
+	coll := client.Database(dbName).Collection(collection)
+	result, err := coll.UpdateOne(context.TODO(), filter, update, options.Update().SetUpsert(true))
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+func UpsertDocuments(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
+	coll := client.Database(dbName).Collection(collection)
+	result, err := coll.UpdateMany(context.TODO(), filter, update, options.Update().SetUpsert(true))
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
 func DeleteDocument(collection string, filter bson.D) *mongo.DeleteResult {
 	coll := client.Database(dbName).Collection(collection)
 	result, err := coll.DeleteOne(context.TODO(), filter)

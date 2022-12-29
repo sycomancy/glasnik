@@ -2,6 +2,7 @@ package njuskalo
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 
@@ -55,7 +56,7 @@ func FetchAds(url string, client *infra.IncognitoClient) ([]types.AdEntry, error
 	return items, nil
 }
 
-func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdEntry, error) {
+func getPageReader(url string, page int, client *infra.IncognitoClient) (io.ReadCloser, error) {
 	urlWithPage := url
 	if page > 1 {
 		u, err := buildURL(url, page)
@@ -66,9 +67,6 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 	}
 
 	status, body, error := client.GetURLDataWithRetries(urlWithPage, headers)
-	// Find review items
-	items := []types.AdEntry{}
-
 	if status == ErrBadRequest.Error() {
 		// TODO(sycomancy): handle 400 BAD REQUEST!!!
 		logrus.WithFields(logrus.Fields{
@@ -83,15 +81,22 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 			"status": status,
 			"url":    urlWithPage,
 		}).Warning("fetching from njuskalo")
-		return items, nil
+		return nil, error
 	}
 
 	if error != nil {
 		return nil, error
 	}
+	return body, nil
+}
 
+func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdEntry, error) {
+	items := []types.AdEntry{}
+	body, err := getPageReader(url, page, client)
+	if err != nil {
+		return nil, err
+	}
 	doc, err := goquery.NewDocumentFromReader(body)
-
 	if err != nil {
 		return nil, fmt.Errorf("unable to get document from response %w", err)
 	}
