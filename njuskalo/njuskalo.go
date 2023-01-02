@@ -18,7 +18,7 @@ const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .Entit
 const entityTitleQuery = ".entity-title a"
 const entityPriceQuery = ".price-item > .price"
 
-var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
+var Headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
 
@@ -56,6 +56,18 @@ func FetchAds(url string, client *infra.IncognitoClient) ([]types.AdEntry, error
 	return items, nil
 }
 
+func GetUrlForPage(url string, page int) (string, error) {
+	urlWithPage := url
+	if page != 0 {
+		u, err := buildURL(url, page)
+		urlWithPage = u
+		if err != nil {
+			return "", ErrBadRequest
+		}
+	}
+	return urlWithPage, nil
+}
+
 func getPageReader(url string, page int, client *infra.IncognitoClient) (io.ReadCloser, error) {
 	urlWithPage := url
 	if page > 1 {
@@ -66,7 +78,7 @@ func getPageReader(url string, page int, client *infra.IncognitoClient) (io.Read
 		}
 	}
 
-	status, body, error := client.GetURLDataWithRetries(urlWithPage, headers)
+	status, body, error := client.GetURLDataWithRetries(urlWithPage, Headers)
 	if status == ErrBadRequest.Error() {
 		// TODO(sycomancy): handle 400 BAD REQUEST!!!
 		logrus.WithFields(logrus.Fields{
@@ -88,6 +100,43 @@ func getPageReader(url string, page int, client *infra.IncognitoClient) (io.Read
 		return nil, error
 	}
 	return body, nil
+}
+
+func ParsePage(html string) ([]types.AdEntry, error) {
+	reader := strings.NewReader(html)
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get document from response %w", err)
+	}
+
+	items := []types.AdEntry{}
+
+	doc.Find(entityListItemsQuery).Each(func(i int, s *goquery.Selection) {
+		var id string
+		var title string
+		var link string
+		var price string
+
+		itemId, idExists := s.Attr("data-href")
+		titleEl := s.Find(entityTitleQuery)
+		hrefAttr, exists := titleEl.Attr("href")
+		price = s.Find(entityPriceQuery).Text()
+		title = titleEl.Text()
+
+		if idExists {
+			id = itemId
+		}
+
+		if exists {
+			// TODO(sycomancy): add this to connfig
+			link = "https://njuskalo.hr" + hrefAttr
+		}
+
+		item := types.AdEntry{Id: id, Title: title, Link: link, Price: price}
+		items = append(items, item)
+	})
+
+	return items, nil
 }
 
 func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdEntry, error) {

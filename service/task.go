@@ -6,7 +6,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/sycomancy/glasnik/infra"
-	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -50,7 +49,6 @@ func NewFetchTask() *FetchTask {
 
 func (s *FetchTask) Run() error {
 	flogg.Info("started schedule")
-
 	locations := GetAllLocalityEntries()
 	lIDS := []string{}
 	for _, l := range locations {
@@ -59,16 +57,14 @@ func (s *FetchTask) Run() error {
 	s.locationsInQueue = lIDS
 
 	worker := infra.NewWorker[*LocalityEntry](locationWorkersNum)
-
 	worker.Produce(func(producerStream chan<- *LocalityEntry, stopFn func()) {
 		for _, loc := range locations {
 			producerStream <- loc
 		}
 		stopFn()
 	})
-
-	worker.Consume(func(loc *LocalityEntry) {
-		s.fetchAdsForLocation(loc)
+	worker.Consume(func(l *LocalityEntry) {
+		s.fetchAdsForLocation(l)
 		// ads, err := njuskalo.FetchAds(fullURL, client)
 		// if err != nil {
 		// 	logg.Warnf("failed to get data for location %s %w", val.Attributes.Title, err)
@@ -78,7 +74,6 @@ func (s *FetchTask) Run() error {
 		// 	logg.Warnf("check this %s", fullURL)
 		// }
 	})
-
 	worker.Wait(func(data *LocalityEntry) {
 		flogg.Info("done!!!")
 	})
@@ -88,16 +83,21 @@ func (s *FetchTask) Run() error {
 
 func (s *FetchTask) fetchAdsForLocation(loc *LocalityEntry) {
 	_ = fmt.Sprintf("%s%s", baseURL, loc.Id)
-	_ = infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
+	client := infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
 	flogg.Infof("processing location %s \n", loc.Attributes.Title)
-
-	items := make([]types.AdEntry, 0)
-	hasMorePage := true
-	page := 1
-
-	for hasMorePage {
-		pageItems, err := njuskalo
+	location := NewLocation(client)
+	a, err := location.GetPageHTML(url, 0, client)
+	if err != nil {
+		flogg.Error(err)
 	}
+	flogg.Info(a)
+	// items := make([]types.AdEntry, 0)
+	// hasMorePage := true
+	// page := 1
+
+	// for hasMorePage {
+	// 	pageItems, err := njuskalo
+	// }
 }
 
 // ################# DB Models #####################

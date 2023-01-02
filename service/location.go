@@ -1,11 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sycomancy/glasnik/infra"
+	"github.com/sycomancy/glasnik/njuskalo"
+	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -41,6 +44,28 @@ type Location struct {
 
 func NewLocation(client *infra.IncognitoClient) *Location {
 	return &Location{client: client}
+}
+
+func (l *Location) GetPageHTML(url string, page int, client *infra.IncognitoClient) (string, error) {
+	// TODO(sycomancy): inversion of control
+	pageURL, err := njuskalo.GetUrlForPage(url, page)
+	if err != nil {
+		return "", err
+	}
+
+	_, res, err := client.GetURLDataWithRetries(pageURL, njuskalo.Headers)
+	//errors.Is(err,njuskalo.ErrBadRequest)
+	if err != nil {
+		return "", err
+	}
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(res)
+	return buf.String(), nil
+}
+
+func (l *Location) GetItemsFromHTML(html string) ([]types.AdEntry, error) {
+	return njuskalo.ParsePage(html)
 }
 
 // Location MetaData
