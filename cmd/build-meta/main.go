@@ -16,6 +16,6 @@ func main() {
 	// 	panic(err)
 	// }
 
-	schedule := service.NewFetchTask([]string{"1264"})
+	schedule := service.NewFetchTask()
 	schedule.Run()
 }

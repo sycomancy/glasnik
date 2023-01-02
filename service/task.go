@@ -1,10 +1,12 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sycomancy/glasnik/infra"
+	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -14,6 +16,7 @@ import (
 var (
 	scheduleCollection = "tasks"
 	locationWorkersNum = 3
+	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
 )
 
 var flogg = logrus.WithFields(logrus.Fields{
@@ -63,7 +66,38 @@ func (s *FetchTask) Run() error {
 		}
 		stopFn()
 	})
+
+	worker.Consume(func(loc *LocalityEntry) {
+		s.fetchAdsForLocation(loc)
+		// ads, err := njuskalo.FetchAds(fullURL, client)
+		// if err != nil {
+		// 	logg.Warnf("failed to get data for location %s %w", val.Attributes.Title, err)
+		// }
+
+		// if len(ads) == 0 {
+		// 	logg.Warnf("check this %s", fullURL)
+		// }
+	})
+
+	worker.Wait(func(data *LocalityEntry) {
+		flogg.Info("done!!!")
+	})
+
 	return nil
+}
+
+func (s *FetchTask) fetchAdsForLocation(loc *LocalityEntry) {
+	_ = fmt.Sprintf("%s%s", baseURL, loc.Id)
+	_ = infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
+	flogg.Infof("processing location %s \n", loc.Attributes.Title)
+
+	items := make([]types.AdEntry, 0)
+	hasMorePage := true
+	page := 1
+
+	for hasMorePage {
+		pageItems, err := njuskalo
+	}
 }
 
 // ################# DB Models #####################
@@ -77,7 +111,7 @@ func (s *FetchTask) createModel() {
 	})
 }
 
-func (s *FetchTask) usertModelInDB() {
+func (s *FetchTask) upsertModelInDB() {
 	filter := bson.D{{Key: "_id", Value: s.Id}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
