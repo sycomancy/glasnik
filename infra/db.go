@@ -30,7 +30,12 @@ func MongoConnect(uri string) error {
 	}
 }
 
-func FindDocument[T any](collection string, filter bson.D, result *T) *T {
+func GetCollectionByName(name string) *mongo.Collection {
+	coll := client.Database(dbName).Collection(name)
+	return coll
+}
+
+func FindDocument[T any](collection string, filter interface{}, result *T) *T {
 	coll := client.Database(dbName).Collection(collection)
 	err := coll.FindOne(context.TODO(), filter).Decode(&result)
 
