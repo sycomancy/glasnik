@@ -9,8 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// TODO(sycomancy): implement DB interface, remove Mongo dependency
-
 var (
 	locationWorkersNum = 3
 	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
@@ -44,6 +42,7 @@ func (j *FetchJob) Run() error {
 	for _, l := range locations {
 		locationIDS = append(locationIDS, l.Id)
 	}
+
 	j.locationsInQueue = locationIDS
 	j.storer.CreateFetchJob(j)
 
@@ -54,6 +53,7 @@ func (j *FetchJob) Run() error {
 		}
 		stopFn()
 	})
+
 	worker.Consume(func(l *LocalityEntry) {
 		// s.fetchAdsForLocation(l)
 		// ads, err := njuskalo.FetchAds(fullURL, client)

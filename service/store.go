@@ -13,12 +13,20 @@ var (
 	jobCollection = "jobs"
 )
 
-type FetchJobModel struct {
+type FetchJobEntity struct {
 	Id              primitive.ObjectID `bson:"_id"`
 	StartTime       time.Time          `bson:"start_time,omitempty"`
 	EndTime         time.Time          `bson:"end_time,omitempty"`
 	LocationsInQeue []string           `bson:"locations_qeue,omitempty"`
 	Completed       bool               `bson:"completed"`
+}
+
+type LocationResultEntity struct {
+	Id        primitive.ObjectID `bson:"_id"`
+	JobId     primitive.ObjectID `bson:"jobId"`
+	LastPage  int                `bson:"lastPage"`
+	Completed bool               `bson:"completed"`
+	RawPages  []string           `bson:"rawPages"`
 }
 
 type Storer struct {
@@ -29,7 +37,7 @@ func NewStorer() *Storer {
 }
 
 func (s *Storer) CreateFetchJob(job *FetchJob) error {
-	model := FetchJobModel{
+	model := FetchJobEntity{
 		Id:              job.Id,
 		StartTime:       job.StartTime,
 		EndTime:         job.EndTime,
@@ -40,7 +48,7 @@ func (s *Storer) CreateFetchJob(job *FetchJob) error {
 }
 
 func (s *Storer) GetAllRunningJobs() ([]*FetchJob, error) {
-	var models []*FetchJobModel
+	var models []*FetchJobEntity
 	infra.FindDocuments(jobCollection, bson.D{}, &models)
 
 	jobs := make([]*FetchJob, len(models))
@@ -58,7 +66,7 @@ func (s *Storer) GetAllRunningJobs() ([]*FetchJob, error) {
 
 func (s *Storer) GetJobByID(id string) (*FetchJob, error) {
 	objectId, err := primitive.ObjectIDFromHex(id)
-	model := &FetchJobModel{}
+	model := &FetchJobEntity{}
 	if err != nil {
 		return nil, err
 	}
