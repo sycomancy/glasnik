@@ -46,6 +46,8 @@ func (j *FetchJob) Run() error {
 	j.locationsInQueue = locationIDS
 	j.storer.CreateFetchJob(j)
 
+	locationService := NewLocationService()
+
 	worker := infra.NewWorker[*LocalityEntry](locationWorkersNum)
 	worker.Produce(func(producerStream chan<- *LocalityEntry, stopFn func()) {
 		for _, loc := range locations {
@@ -55,39 +57,24 @@ func (j *FetchJob) Run() error {
 	})
 
 	worker.Consume(func(l *LocalityEntry) {
-		// s.fetchAdsForLocation(l)
-		// ads, err := njuskalo.FetchAds(fullURL, client)
-		// if err != nil {
-		// 	logg.Warnf("failed to get data for location %s %w", val.Attributes.Title, err)
-		// }
-
-		// if len(ads) == 0 {
-		// 	logg.Warnf("check this %s", fullURL)
-		// }
+		j.fetchAdsForLocation(l, locationService)
 	})
+
 	worker.Wait(func(data *LocalityEntry) {
 		flogg.Info("done!!!")
 	})
 	return nil
 }
 
-func (s *FetchJob) fetchAdsForLocation(loc *LocalityEntry) {
-	_ = fmt.Sprintf("%s%s", baseURL, loc.Id)
-	client := infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
+func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationService) {
 	flogg.Infof("processing location %s \n", loc.Attributes.Title)
-	location := NewLocation(client)
-	a, err := location.GetPageHTML("", 0, client)
-	if err != nil {
-		flogg.Error(err)
-	}
-	flogg.Info(a)
-	// items := make([]types.AdEntry, 0)
-	// hasMorePage := true
-	// page := 1
 
-	// for hasMorePage {
-	// 	pageItems, err := njuskalo
-	// }
+	client := infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
+
+	locationPageResult := make(chan *LocationPageResult, 1000)
+	service.GetLocationPages(loc, locationPageResult, client)
+	result := <-locationPageResult
+	fmt.Println("AAAAAAAA", len(result.items))
 }
 
 // ################# DB Models #####################

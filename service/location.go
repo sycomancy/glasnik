@@ -32,21 +32,67 @@ type LocalityResponse struct {
 	Data []LocalityEntry `json:"data"`
 }
 
+type LocationPageResult struct {
+	page  int
+	items []types.AdEntry
+	err   error
+}
+
 func GetAllLocalityEntries() []*LocalityEntry {
 	var locations []*LocalityEntry
 	infra.FindDocuments("locality", bson.D{}, &locations)
 	return locations
 }
 
-type Location struct {
-	client *infra.IncognitoClient
+type LocationService struct {
 }
 
-func NewLocation(client *infra.IncognitoClient) *Location {
-	return &Location{client: client}
+func NewLocationService() *LocationService {
+	return &LocationService{}
 }
 
-func (l *Location) GetPageHTML(url string, page int, client *infra.IncognitoClient) (string, error) {
+func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *LocationPageResult, client *infra.IncognitoClient) {
+	page := 1
+	hasMorePage := true
+	locationURL := fmt.Sprintf("%s%s", baseURL, loc.Id)
+
+	for hasMorePage {
+		locationPageHTML, err := l.getPageHTML(locationURL, page, client)
+		if err != nil {
+			result <- &LocationPageResult{
+				err:  err,
+				page: page,
+			}
+			break
+		}
+
+		adsForPage, err := l.getItemsFromHTML(locationPageHTML)
+		if err != nil {
+			flogg.Error("Unable to parse location page html for %s page: %d", loc.Attributes.Title, page)
+			result <- &LocationPageResult{
+				err:  err,
+				page: page,
+			}
+			break
+		}
+
+		hasMorePage = len(adsForPage) != 0
+
+		if hasMorePage {
+			page += 1
+		} else {
+			flogg.Infof("Got all entries for location %s", loc.Attributes.Title)
+		}
+
+		result <- &LocationPageResult{
+			page:  page,
+			items: adsForPage,
+		}
+	}
+
+}
+
+func (l *LocationService) getPageHTML(url string, page int, client *infra.IncognitoClient) (string, error) {
 	// TODO(sycomancy): inversion of control
 	pageURL, err := njuskalo.GetUrlForPage(url, page)
 	if err != nil {
@@ -64,13 +110,13 @@ func (l *Location) GetPageHTML(url string, page int, client *infra.IncognitoClie
 	return buf.String(), nil
 }
 
-func (l *Location) GetItemsFromHTML(html string) ([]types.AdEntry, error) {
+func (l *LocationService) getItemsFromHTML(html string) ([]types.AdEntry, error) {
 	return njuskalo.ParsePage(html)
 }
 
 // Location MetaData
-func (l *Location) FetchAndPersistLocationMeta(locationIds []string) error {
-	data, err := l.fetchLocalityMeta(locationIds)
+func (l *LocationService) FetchAndPersistLocationMeta(locationIds []string, client *infra.IncognitoClient) error {
+	data, err := l.fetchLocalityMeta(locationIds, client)
 	if err != nil {
 		return err
 	}
@@ -83,12 +129,12 @@ func (l *Location) FetchAndPersistLocationMeta(locationIds []string) error {
 	return nil
 }
 
-func (l *Location) fetchLocalityMeta(locationIds []string) (*LocalityResponse, error) {
+func (l *LocationService) fetchLocalityMeta(locationIds []string, client *infra.IncognitoClient) (*LocalityResponse, error) {
 	url := baseLocalityUrl
 	for _, id := range locationIds {
 		url += fmt.Sprintf("%s,", id)
 	}
-	_, body, err := l.client.GetURLData(url, l.generateHeadersForMeta())
+	_, body, err := client.GetURLData(url, l.generateHeadersForMeta())
 	if err != nil {
 		return &LocalityResponse{}, err
 	}
@@ -101,7 +147,7 @@ func (l *Location) fetchLocalityMeta(locationIds []string) (*LocalityResponse, e
 	return &resp, nil
 }
 
-func (l *Location) generateHeadersForMeta() map[string]string {
+func (l *LocationService) generateHeadersForMeta() map[string]string {
 	return map[string]string{
 		"content-type":  "application/vnd.api+json",
 		"user-agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
