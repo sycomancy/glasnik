@@ -108,7 +108,7 @@ func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *L
 		},
 		},
 		{Key: "$push", Value: bson.D{
-			{Key: "entries", Value: len(result.items)},
+			{Key: "entries", Value: bson.D{{Key: "$each", Value: result.items}}},
 		}},
 	}
 
