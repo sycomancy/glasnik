@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	locationWorkersNum = 1
+	locationWorkersNum = 3
 	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
 )
 
@@ -77,17 +77,5 @@ func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationServ
 	fmt.Println("Got result for", loc.Id, loc.Attributes.Title, result.completed, result.page)
 
 	j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.completed, result.page)
+	j.storer.RemoveLocationsFromJobQueue(j.Id, []string{loc.Id})
 }
-
-// ################# DB Models #####################
-
-// func (s *FetchJob) upsertModelInDB() {
-// 	filter := bson.D{{Key: "_id", Value: s.Id}}
-// 	update := bson.D{
-// 		{Key: "$set", Value: bson.D{
-// 			{Key: "start_time", Value: s.CreateTime},
-// 			{Key: "end_time", Value: s.EndTime},
-// 		},
-// 		},
-// 	}
-// 	infra.UpsertDocument(scheduleCollection, filter, update)

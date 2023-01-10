@@ -19,7 +19,7 @@ type FetchJobEntity struct {
 	Id              primitive.ObjectID `bson:"_id"`
 	StartTime       time.Time          `bson:"start_time,omitempty"`
 	EndTime         time.Time          `bson:"end_time,omitempty"`
-	LocationsInQeue []string           `bson:"locations_qeue,omitempty"`
+	LocationsInQeue []string           `bson:"locations_queue,omitempty"`
 	Completed       bool               `bson:"completed"`
 }
 
@@ -33,6 +33,7 @@ type LocationResultEntity struct {
 
 type Storer struct {
 	locationPageMu sync.RWMutex
+	jobMu          sync.RWMutex
 }
 
 func NewStorer() *Storer {
@@ -88,9 +89,15 @@ func (s *Storer) GetJobByID(id string) (*FetchJob, error) {
 	}, nil
 }
 
-// func (s *Storer) RemoveLocationFromJobQueue(jobID primitive.ObjectID, locationID string) *error {
+func (s *Storer) RemoveLocationsFromJobQueue(jobID primitive.ObjectID, locationIDS []string) *error { // Use $pull here
+	s.jobMu.Lock()
+	defer s.jobMu.Unlock()
 
-// }
+	filter := bson.D{{Key: "_id", Value: jobID}}
+	update := bson.D{{Key: "$pull", Value: bson.D{{Key: "locations_queue", Value: bson.D{{Key: "$in", Value: locationIDS}}}}}}
+	infra.UpdateDocument(jobCollection, filter, update)
+	return nil
+}
 
 func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *LocationPageResult, location *LocalityEntry, completed bool, lastPage int) *error {
 	s.locationPageMu.Lock()
