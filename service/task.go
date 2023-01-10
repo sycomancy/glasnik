@@ -75,6 +75,7 @@ func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationServ
 	service.GetLocationPages(loc, locationPageResult, client)
 	result := <-locationPageResult
 	fmt.Println("AAAAAAAA", len(result.items))
+	service.StoreResultsForLocationPage(j.Id, result, loc)
 }
 
 // ################# DB Models #####################

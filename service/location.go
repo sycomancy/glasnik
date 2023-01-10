@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sycomancy/glasnik/infra"
 	"github.com/sycomancy/glasnik/njuskalo"
 	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
-	locationMetaCollection = "locality"
-	baseLocalityUrl        = "https://www.njuskalo.hr/ccapi/v2/locality?filter[parent]="
+	locationMetaCollection   = "locality"
+	locationResultCollection = "locationResult"
+	baseLocalityUrl          = "https://www.njuskalo.hr/ccapi/v2/locality?filter[parent]="
 )
 
 var logg = logrus.WithFields(logrus.Fields{
@@ -45,10 +48,34 @@ func GetAllLocalityEntries() []*LocalityEntry {
 }
 
 type LocationService struct {
+	locationPageMu sync.RWMutex
 }
 
 func NewLocationService() *LocationService {
 	return &LocationService{}
+}
+
+func (l *LocationService) StoreResultsForLocationPage(jobID primitive.ObjectID, result *LocationPageResult, location *LocalityEntry) *error {
+	// First insert result for page
+	l.locationPageMu.Lock()
+	defer l.locationPageMu.Unlock()
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "location", Value: bson.D{
+				{Key: "id", Value: location.Id},
+				{Key: "title", Value: location.Attributes.Title},
+			}},
+		},
+		},
+		{Key: "$push", Value: bson.D{
+			{Key: "entries", Value: len(result.items)},
+		}},
+	}
+
+	filter := bson.D{{Key: "location.id", Value: location.Id}}
+	infra.UpsertDocument(locationResultCollection, filter, update)
+	return nil
 }
 
 func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *LocationPageResult, client *infra.IncognitoClient) {

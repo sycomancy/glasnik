@@ -92,9 +92,9 @@ func InsertDocuments(collection string, entries []interface{}) *mongo.InsertMany
 	return result
 }
 
-func UpdateDocument(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
+func UpdateDocument(collection string, filter bson.D, document interface{}) *mongo.UpdateResult {
 	coll := client.Database(dbName).Collection(collection)
-	result, err := coll.UpdateOne(context.TODO(), filter, update)
+	result, err := coll.UpdateOne(context.TODO(), filter, document)
 	if err != nil {
 		panic(err)
 	}
@@ -110,9 +110,9 @@ func UpdateDocuments(collection string, filter bson.D, update bson.D) *mongo.Upd
 	return result
 }
 
-func UpsertDocument(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
+func UpsertDocument(collection string, filter bson.D, document interface{}) *mongo.UpdateResult {
 	coll := client.Database(dbName).Collection(collection)
-	result, err := coll.UpdateOne(context.TODO(), filter, update, options.Update().SetUpsert(true))
+	result, err := coll.UpdateOne(context.TODO(), filter, document, options.Update().SetUpsert(true))
 	if err != nil {
 		panic(err)
 	}
