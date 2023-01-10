@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/sycomancy/glasnik/infra"
@@ -10,7 +11,8 @@ import (
 )
 
 var (
-	jobCollection = "jobs"
+	jobCollection            = "jobs"
+	locationResultCollection = "locationResult"
 )
 
 type FetchJobEntity struct {
@@ -30,6 +32,7 @@ type LocationResultEntity struct {
 }
 
 type Storer struct {
+	locationPageMu sync.RWMutex
 }
 
 func NewStorer() *Storer {
@@ -83,4 +86,33 @@ func (s *Storer) GetJobByID(id string) (*FetchJob, error) {
 		StartTime:        model.StartTime,
 		EndTime:          model.EndTime,
 	}, nil
+}
+
+// func (s *Storer) RemoveLocationFromJobQueue(jobID primitive.ObjectID, locationID string) *error {
+
+// }
+
+func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *LocationPageResult, location *LocalityEntry, completed bool, lastPage int) *error {
+	s.locationPageMu.Lock()
+	defer s.locationPageMu.Unlock()
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "location", Value: bson.D{
+				{Key: "id", Value: location.Id},
+				{Key: "title", Value: location.Attributes.Title},
+			}},
+			{Key: "jobId", Value: jobID},
+			{Key: "completed", Value: completed},
+			{Key: "lastPage", Value: lastPage},
+		},
+		},
+		{Key: "$push", Value: bson.D{
+			{Key: "entries", Value: len(result.items)},
+		}},
+	}
+
+	filter := bson.D{{Key: "location.id", Value: location.Id}}
+	infra.UpsertDocument(locationResultCollection, filter, update)
+	return nil
 }

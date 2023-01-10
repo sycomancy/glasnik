@@ -4,20 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sycomancy/glasnik/infra"
 	"github.com/sycomancy/glasnik/njuskalo"
 	"github.com/sycomancy/glasnik/types"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
-	locationMetaCollection   = "locality"
-	locationResultCollection = "locationResult"
-	baseLocalityUrl          = "https://www.njuskalo.hr/ccapi/v2/locality?filter[parent]="
+	locationMetaCollection = "locality"
+	baseLocalityUrl        = "https://www.njuskalo.hr/ccapi/v2/locality?filter[parent]="
 )
 
 var logg = logrus.WithFields(logrus.Fields{
@@ -36,9 +33,10 @@ type LocalityResponse struct {
 }
 
 type LocationPageResult struct {
-	page  int
-	items []types.AdEntry
-	err   error
+	page      int
+	items     []types.AdEntry
+	err       error
+	completed bool
 }
 
 func GetAllLocalityEntries() []*LocalityEntry {
@@ -48,34 +46,10 @@ func GetAllLocalityEntries() []*LocalityEntry {
 }
 
 type LocationService struct {
-	locationPageMu sync.RWMutex
 }
 
 func NewLocationService() *LocationService {
 	return &LocationService{}
-}
-
-func (l *LocationService) StoreResultsForLocationPage(jobID primitive.ObjectID, result *LocationPageResult, location *LocalityEntry) *error {
-	// First insert result for page
-	l.locationPageMu.Lock()
-	defer l.locationPageMu.Unlock()
-
-	update := bson.D{
-		{Key: "$set", Value: bson.D{
-			{Key: "location", Value: bson.D{
-				{Key: "id", Value: location.Id},
-				{Key: "title", Value: location.Attributes.Title},
-			}},
-		},
-		},
-		{Key: "$push", Value: bson.D{
-			{Key: "entries", Value: len(result.items)},
-		}},
-	}
-
-	filter := bson.D{{Key: "location.id", Value: location.Id}}
-	infra.UpsertDocument(locationResultCollection, filter, update)
-	return nil
 }
 
 func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *LocationPageResult, client *infra.IncognitoClient) {
@@ -87,8 +61,9 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		locationPageHTML, err := l.getPageHTML(locationURL, page, client)
 		if err != nil {
 			result <- &LocationPageResult{
-				err:  err,
-				page: page,
+				err:       err,
+				page:      page,
+				completed: false,
 			}
 			break
 		}
@@ -97,24 +72,21 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		if err != nil {
 			flogg.Error("Unable to parse location page html for %s page: %d", loc.Attributes.Title, page)
 			result <- &LocationPageResult{
-				err:  err,
-				page: page,
+				err:       err,
+				page:      page,
+				completed: false,
 			}
 			break
 		}
 
 		hasMorePage = len(adsForPage) != 0
-
-		if hasMorePage {
-			page += 1
-		} else {
-			flogg.Infof("Got all entries for location %s", loc.Attributes.Title)
-		}
-
 		result <- &LocationPageResult{
-			page:  page,
-			items: adsForPage,
+			page:      page,
+			items:     adsForPage,
+			completed: !hasMorePage,
 		}
+
+		page += 1
 	}
 
 }

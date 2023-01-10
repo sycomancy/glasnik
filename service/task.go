@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	locationWorkersNum = 3
+	locationWorkersNum = 1
 	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
 )
 
@@ -67,15 +67,16 @@ func (j *FetchJob) Run() error {
 }
 
 func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationService) {
-	flogg.Infof("processing location %s \n", loc.Attributes.Title)
+	flogg.Infof("processing location %s %s \n", loc.Id, loc.Attributes.Title)
 
 	client := infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
 
 	locationPageResult := make(chan *LocationPageResult, 1000)
 	service.GetLocationPages(loc, locationPageResult, client)
 	result := <-locationPageResult
-	fmt.Println("AAAAAAAA", len(result.items))
-	service.StoreResultsForLocationPage(j.Id, result, loc)
+	fmt.Println("Got result for", loc.Id, loc.Attributes.Title, result.completed, result.page)
+
+	j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.completed, result.page)
 }
 
 // ################# DB Models #####################

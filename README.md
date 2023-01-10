@@ -28,7 +28,7 @@
   id: number;
   title: string;
   }
-- taskID
+- jobID
 - lastPage 3
 - completed
 - rawPages: []{url: string; html: string}
