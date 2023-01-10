@@ -7,8 +7,8 @@
 # 1. Create new task flow
 
 - create TaskChedule entity in db with started time [done]
-- start fetch job for every locality
-- persist result in DB for every page fetched with raw data (rawPages)
+- start fetch job for every locality [done]
+- persist result in DB for every page fetched with raw data (rawPages) [done]
 
 # 2. Create DB model for Task
 

@@ -65,6 +65,7 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 				page:      page,
 				completed: false,
 			}
+			hasMorePage = false
 			break
 		}
 
@@ -76,10 +77,12 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 				page:      page,
 				completed: false,
 			}
+			hasMorePage = false
 			break
 		}
 
-		hasMorePage = len(adsForPage) != 0
+		hasMorePage = len(adsForPage) > 0
+
 		result <- &LocationPageResult{
 			page:      page,
 			items:     adsForPage,
@@ -88,7 +91,6 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 
 		page += 1
 	}
-
 }
 
 func (l *LocationService) getPageHTML(url string, page int, client *infra.IncognitoClient) (string, error) {

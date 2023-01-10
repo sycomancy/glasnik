@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -10,7 +9,7 @@ import (
 )
 
 var (
-	locationWorkersNum = 3
+	locationWorkersNum = 1
 	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
 )
 
@@ -45,7 +44,6 @@ func (j *FetchJob) Run() error {
 
 	j.locationsInQueue = locationIDS
 	j.storer.CreateFetchJob(j)
-
 	locationService := NewLocationService()
 
 	worker := infra.NewWorker[*LocalityEntry](locationWorkersNum)
@@ -67,15 +65,23 @@ func (j *FetchJob) Run() error {
 }
 
 func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationService) {
-	flogg.Infof("processing location %s %s \n", loc.Id, loc.Attributes.Title)
-
 	client := infra.NewIncognitoClient([]time.Duration{3 * time.Second, 6 * time.Second, 15 * time.Second, 30 * time.Second})
 
-	locationPageResult := make(chan *LocationPageResult, 1000)
-	service.GetLocationPages(loc, locationPageResult, client)
+	locationPageResult := make(chan *LocationPageResult)
+	go service.GetLocationPages(loc, locationPageResult, client)
 	result := <-locationPageResult
-	fmt.Println("Got result for", loc.Id, loc.Attributes.Title, result.completed, result.page)
+
+	if result.err != nil {
+		flogg.Fatal("-----", result.err)
+		return
+	}
 
 	j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.completed, result.page)
-	j.storer.RemoveLocationsFromJobQueue(j.Id, []string{loc.Id})
+
+	if result.completed {
+		j.storer.RemoveLocationsFromJobQueue(j.Id, []string{loc.Id})
+	}
+
+	flogg = flogg.WithFields(logrus.Fields{"completed": result.completed, "result_count": len(result.items), "error": result.err, "job_id": j.Id.Hex(), "loc_id": loc.Id, "loc": loc.Attributes.Title})
+	flogg.Info("fetch adds for location")
 }

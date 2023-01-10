@@ -89,7 +89,7 @@ func (s *Storer) GetJobByID(id string) (*FetchJob, error) {
 	}, nil
 }
 
-func (s *Storer) RemoveLocationsFromJobQueue(jobID primitive.ObjectID, locationIDS []string) *error { // Use $pull here
+func (s *Storer) RemoveLocationsFromJobQueue(jobID primitive.ObjectID, locationIDS []string) *error {
 	s.jobMu.Lock()
 	defer s.jobMu.Unlock()
 
@@ -103,7 +103,7 @@ func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *L
 	s.locationPageMu.Lock()
 	defer s.locationPageMu.Unlock()
 
-	update := bson.D{
+	upsert := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "location", Value: bson.D{
 				{Key: "id", Value: location.Id},
@@ -120,6 +120,6 @@ func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *L
 	}
 
 	filter := bson.D{{Key: "location.id", Value: location.Id}}
-	infra.UpsertDocument(locationResultCollection, filter, update)
+	infra.UpsertDocument(locationResultCollection, filter, upsert)
 	return nil
 }

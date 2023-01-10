@@ -126,7 +126,7 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 		if err == nil && status != "400 Bad Request" {
 			break
 		}
-		fmt.Printf("Backing offf for %s \n", url)
+		// fmt.Printf("Backing offf for %s \n", url)
 		time.Sleep(backoff)
 		t.tor.newIp()
 	}
@@ -134,7 +134,7 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 	// All retries failed
 	if err != nil {
 		body.Close()
-		return status, nil, err
+		return status, nil, fmt.Errorf("unable to fetch URL. Retried for %d times", len(t.backoffSchedule))
 	}
 
 	return status, body, nil
