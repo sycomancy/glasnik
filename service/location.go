@@ -101,7 +101,6 @@ func (l *LocationService) getPageHTML(url string, page int, client *infra.Incogn
 	}
 
 	_, res, err := client.GetURLDataWithRetries(pageURL, njuskalo.Headers)
-	//errors.Is(err,njuskalo.ErrBadRequest)
 	if err != nil {
 		return "", err
 	}
@@ -115,7 +114,6 @@ func (l *LocationService) getItemsFromHTML(html string) ([]types.AdEntry, error)
 	return njuskalo.ParsePage(html)
 }
 
-// Location MetaData
 func (l *LocationService) FetchAndPersistLocationMeta(locationIds []string, client *infra.IncognitoClient) error {
 	data, err := l.fetchLocalityMeta(locationIds, client)
 	if err != nil {
