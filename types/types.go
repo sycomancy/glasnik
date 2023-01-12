@@ -11,6 +11,7 @@ type AdEntry struct {
 	Title string `json:"title" bson:"title,omitempty"`
 	Link  string `json:"link" bson:"link,omitempty"`
 	Price string `json:"price" bson:"price,omitempty"`
+	Size  string `json:"size" bson:"size,omitempty"`
 }
 
 // Request for data fetching.

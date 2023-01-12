@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,15 +18,16 @@ var hostname = "https://njuskalo.hr/nekretnine/"
 const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .EntityList-item.EntityList-item--Regular"
 const entityTitleQuery = ".entity-title a"
 const entityPriceQuery = ".price-item > .price"
+const descriptionQuery = ".entity-description"
+
+var leftDelimiter = "ina:"
+var rightDelimiter = "m2"
+
+var sizeRx = regexp.MustCompile(`(?s)` + regexp.QuoteMeta(leftDelimiter) + `(.*?)` + regexp.QuoteMeta(rightDelimiter))
 
 var Headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
-
-// func FetchAd(slug string, client *infra.IncognitoClient) (types.AdDetails, error) {
-// 	urlWithSlug := fmt.Sprintf("%s%s", hostname, slug)
-// 	// status, body, error := client.GetURLDataWithRetries(urlWithSlug, headers)
-// }
 
 func FetchAds(url string, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 	items := make([]types.AdEntry, 0)
@@ -116,12 +118,17 @@ func ParsePage(html string) ([]types.AdEntry, error) {
 		var title string
 		var link string
 		var price string
+		var size string
 
 		itemId, idExists := s.Attr("data-href")
 		titleEl := s.Find(entityTitleQuery)
 		hrefAttr, exists := titleEl.Attr("href")
 		price = s.Find(entityPriceQuery).Text()
 		title = titleEl.Text()
+
+		description := s.Find(descriptionQuery).Text()
+		matches := sizeRx.FindAllStringSubmatch(description, -1)
+		size = strings.TrimSpace(matches[0][1])
 
 		if idExists {
 			id = itemId
@@ -132,7 +139,7 @@ func ParsePage(html string) ([]types.AdEntry, error) {
 			link = "https://njuskalo.hr" + hrefAttr
 		}
 
-		item := types.AdEntry{Id: id, Title: title, Link: link, Price: price}
+		item := types.AdEntry{Id: id, Title: title, Link: link, Price: price, Size: size}
 		items = append(items, item)
 	})
 
