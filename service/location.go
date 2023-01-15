@@ -33,10 +33,10 @@ type LocalityResponse struct {
 }
 
 type LocationPageResult struct {
-	page      int
-	items     []types.AdEntry
-	err       error
-	completed bool
+	Page      int             `bson:"page,omitempty"`
+	Items     []types.AdEntry `bson:"items,omitempty"`
+	Err       error           `bson:"err,omitempty"`
+	Completed bool            `bson:"completed,omitempty"`
 }
 
 func GetAllLocalityEntries() []*LocalityEntry {
@@ -61,9 +61,9 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		locationPageHTML, err := l.getPageHTML(locationURL, page, client)
 		if err != nil {
 			result <- &LocationPageResult{
-				err:       err,
-				page:      page,
-				completed: false,
+				Err:       err,
+				Page:      page,
+				Completed: false,
 			}
 			hasMorePage = false
 			break
@@ -73,9 +73,9 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		if err != nil {
 			flogg.Error("Unable to parse location page html for %s page: %d", loc.Attributes.Title, page)
 			result <- &LocationPageResult{
-				err:       err,
-				page:      page,
-				completed: false,
+				Err:       err,
+				Page:      page,
+				Completed: false,
 			}
 			hasMorePage = false
 			break
@@ -84,9 +84,9 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		hasMorePage = len(adsForPage) > 0
 
 		result <- &LocationPageResult{
-			page:      page,
-			items:     adsForPage,
-			completed: !hasMorePage,
+			Page:      page,
+			Items:     adsForPage,
+			Completed: !hasMorePage,
 		}
 
 		page += 1

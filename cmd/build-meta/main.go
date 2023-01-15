@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/sycomancy/glasnik/analytics"
 	"github.com/sycomancy/glasnik/infra"
 	"github.com/sycomancy/glasnik/service"
 )
@@ -16,6 +17,10 @@ func main() {
 	// 	panic(err)
 	// }
 
-	schedule := service.NewFetchTask()
-	schedule.Run()
+	// schedule := service.NewFetchTask()
+	// schedule.Run()
+
+	storer := service.NewStorer()
+	generator := analytics.NewGenerator(storer)
+	generator.Process("63c1c4be63021a86a3d5246f")
 }

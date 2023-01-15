@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	locationWorkersNum = 3
+	locationWorkersNum = 5
 	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
 )
 
@@ -70,18 +70,19 @@ func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationServ
 	locationPageResult := make(chan *LocationPageResult)
 	go service.GetLocationPages(loc, locationPageResult, client)
 
+	// TODO(sycomancy): change this to for result := range locationPageResult
 	for {
 		result := <-locationPageResult
-		if result.err != nil {
-			flogg.Fatal("-----", result.err)
+		if result.Err != nil {
+			flogg.Fatal("-----", result.Err)
 			return
 		}
 
-		flogg = flogg.WithFields(logrus.Fields{"completed": result.completed, "result_count": len(result.items), "error": result.err, "job_id": j.Id.Hex(), "loc_id": loc.Id, "loc": loc.Attributes.Title})
+		flogg = flogg.WithFields(logrus.Fields{"completed": result.Completed, "result_count": len(result.Items), "error": result.Err, "job_id": j.Id.Hex(), "loc_id": loc.Id, "loc": loc.Attributes.Title})
 		flogg.Info("fetch adds for location")
 
-		j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.completed, result.page)
-		if result.completed {
+		j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.Completed, result.Page)
+		if result.Completed {
 			j.storer.RemoveLocationsFromJobQueue(j.Id, []string{loc.Id})
 			return
 		}

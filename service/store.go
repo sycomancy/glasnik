@@ -115,11 +115,27 @@ func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *L
 		},
 		},
 		{Key: "$push", Value: bson.D{
-			{Key: "entries", Value: bson.D{{Key: "$each", Value: result.items}}},
+			{Key: "entries", Value: bson.D{{Key: "$each", Value: result.Items}}},
 		}},
 	}
 
 	filter := bson.D{{Key: "location.id", Value: location.Id}}
 	infra.UpsertDocument(locationResultCollection, filter, upsert)
 	return nil
+}
+
+func (s *Storer) ResultsForJob(jobID string) ([]*LocationPageResult, error) {
+	s.locationPageMu.RLock()
+	defer s.locationPageMu.RUnlock()
+
+	ji, err := primitive.ObjectIDFromHex(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.D{{Key: "jobId", Value: ji}}
+
+	var results []*LocationPageResult
+	infra.FindDocuments(locationResultCollection, filter, &results)
+	return results, nil
 }
