@@ -9,8 +9,7 @@ import (
 )
 
 var (
-	locationWorkersNum = 5
-	baseURL            = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
+	baseURL = "https://www.njuskalo.hr/prodaja-stanova?geo[locationIds]="
 )
 
 var flogg = logrus.WithFields(logrus.Fields{
@@ -33,20 +32,20 @@ func NewFetchTask() *FetchJob {
 	}
 }
 
-func (j *FetchJob) Run() error {
+func (j *FetchJob) Run(workerCount int) error {
 	flogg.Info("started schedule")
 
 	locations := GetAllLocalityEntries()
 	locationIDS := []string{}
 	for _, l := range locations {
-		locationIDS = append(locationIDS, l.Id)
+		locationIDS = append(locationIDS, l.Id.String())
 	}
 
 	j.locationsInQueue = locationIDS
 	j.storer.CreateFetchJob(j)
 	locationService := NewLocationService()
 
-	worker := infra.NewWorker[*LocalityEntry](locationWorkersNum)
+	worker := infra.NewWorker[*LocalityEntry](workerCount)
 	worker.Produce(func(producerStream chan<- *LocalityEntry, stopFn func()) {
 		for _, loc := range locations {
 			producerStream <- loc
@@ -83,7 +82,7 @@ func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationServ
 
 		j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.Completed, result.Page)
 		if result.Completed {
-			j.storer.RemoveLocationsFromJobQueue(j.Id, []string{loc.Id})
+			j.storer.RemoveLocationsFromJobQueue(j.Id, []string{loc.Id.String()})
 			return
 		}
 	}

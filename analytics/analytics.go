@@ -2,7 +2,7 @@ package analytics
 
 import (
 	"fmt"
-	"time"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 
@@ -46,17 +46,23 @@ func (g *Generator) Process(jobID string) {
 	}
 
 	forLocResult := make(chan string)
-	for _, r := range results {
-		go g.calculatePerLocation(r, forLocResult)
+
+	var wg sync.WaitGroup
+	for i, r := range results {
+		wg.Add(1)
+
+		go func(r *service.LocationPageResult, i int) {
+			defer wg.Done()
+			g.calculatePerLocation(r, forLocResult, i)
+		}(r, i)
 	}
 
-	for res := range forLocResult {
-		fmt.Printf("Received result for %s \n", res)
-	}
+	fmt.Println("ajmoooo")
+	wg.Wait()
+	fmt.Println("evooooooo")
 }
 
-func (g *Generator) calculatePerLocation(loc *service.LocationPageResult, result chan<- string) {
-	time.Sleep(time.Second * 2)
-	fmt.Println("Hereeeee", loc)
-	result <- loc.Location.Id
+func (g *Generator) calculatePerLocation(loc *service.LocationPageResult, result chan<- string, id int) {
+	fmt.Println("Hereeeee", loc.Location.Title, loc.Location.Id, id)
+	result <- loc.Location.Title
 }
