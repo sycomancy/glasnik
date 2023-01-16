@@ -78,7 +78,7 @@ func (j *FetchJob) fetchAdsForLocation(loc *LocalityEntry, service *LocationServ
 			return
 		}
 
-		flogg = flogg.WithFields(logrus.Fields{"completed": result.Completed, "result_count": len(result.Items), "error": result.Err, "job_id": j.Id.Hex(), "loc_id": loc.Id, "loc": loc.Attributes.Title})
+		flogg = flogg.WithFields(logrus.Fields{"completed": result.Completed, "result_count": len(result.Items), "error": result.Err, "job_id": j.Id.Hex(), "loc_id": loc.Id, "loc": loc.Title})
 		flogg.Info("fetch adds for location")
 
 		j.storer.StoreResultsForLocationPage(j.Id, result, loc, result.Completed, result.Page)

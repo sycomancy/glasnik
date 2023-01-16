@@ -19,8 +19,7 @@ func main() {
 
 	// schedule := service.NewFetchTask()
 	// schedule.Run()
-
 	storer := service.NewStorer()
 	generator := analytics.NewGenerator(storer)
-	generator.Process("63c1c4be63021a86a3d5246f")
+	generator.Process("63c52e3a441801d9393615c9")
 }

@@ -107,7 +107,7 @@ func (s *Storer) StoreResultsForLocationPage(jobID primitive.ObjectID, result *L
 		{Key: "$set", Value: bson.D{
 			{Key: "location", Value: bson.D{
 				{Key: "id", Value: location.Id},
-				{Key: "title", Value: location.Attributes.Title},
+				{Key: "title", Value: location.Title},
 			}},
 			{Key: "jobId", Value: jobID},
 			{Key: "completed", Value: completed},

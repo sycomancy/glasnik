@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -12,21 +13,21 @@ var logg = logrus.WithFields(logrus.Fields{
 	"ctx": "fetchSchedule",
 })
 
-type LocationDetails struct {
-	Id    string `json:"id,omitempty"`
-	Title string `json:"title,omitempty"`
-}
+// type LocationDetails struct {
+// 	Id    string `json:"id,omitempty"`
+// 	Title string `json:"title,omitempty"`
+// }
 
 type AnalyticResult struct {
-	JobID            string          `json:"jobId,omitempty"`
-	Date             string          `json:"date,omitempty"`
-	Location         LocationDetails `json:"location,omitempty"`
-	Count            int             `json:"count,omitempty"`
-	MaxPrice         int             `json:"maxPrice,omitempty"`
-	MinPrice         int             `json:"minPrice,omitempty"`
-	AvgPrice         int             `json:"avgPrice,omitempty"`
-	StdPrice         int             `json:"stdPrice,omitempty"`
-	AvgPricePerMeter int             `json:"avgPricePerMeter,omitempty"`
+	JobID string `json:"jobId,omitempty"`
+	Date  string `json:"date,omitempty"`
+	// Location         LocationDetails `json:"location,omitempty"`
+	Count            int `json:"count,omitempty"`
+	MaxPrice         int `json:"maxPrice,omitempty"`
+	MinPrice         int `json:"minPrice,omitempty"`
+	AvgPrice         int `json:"avgPrice,omitempty"`
+	StdPrice         int `json:"stdPrice,omitempty"`
+	AvgPricePerMeter int `json:"avgPricePerMeter,omitempty"`
 }
 
 type Generator struct {
@@ -44,9 +45,18 @@ func (g *Generator) Process(jobID string) {
 		logg.Fatalf("failed to fetch results for %s %w", jobID, err)
 	}
 
+	forLocResult := make(chan string)
 	for _, r := range results {
-		fmt.Println(r.Completed)
+		go g.calculatePerLocation(r, forLocResult)
+	}
+
+	for res := range forLocResult {
+		fmt.Printf("Received result for %s \n", res)
 	}
 }
 
-func (g *Generator) CalculatePerLocation()
+func (g *Generator) calculatePerLocation(loc *service.LocationPageResult, result chan<- string) {
+	time.Sleep(time.Second * 2)
+	fmt.Println("Hereeeee", loc)
+	result <- loc.Location.Id
+}

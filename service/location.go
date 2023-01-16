@@ -22,10 +22,8 @@ var logg = logrus.WithFields(logrus.Fields{
 })
 
 type LocalityEntry struct {
-	Id         string `json:"id,omitempty" bson:"_id"`
-	Attributes struct {
-		Title string `json:"title"`
-	}
+	Id    string `json:"id,omitempty" bson:"_id"`
+	Title string `json:"title"`
 }
 
 type LocalityResponse struct {
@@ -33,6 +31,7 @@ type LocalityResponse struct {
 }
 
 type LocationPageResult struct {
+	Location  *LocalityEntry  `bson:"location,omitempty"`
 	Page      int             `bson:"page,omitempty"`
 	Items     []types.AdEntry `bson:"items,omitempty"`
 	Err       error           `bson:"err,omitempty"`
@@ -61,6 +60,7 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		locationPageHTML, err := l.getPageHTML(locationURL, page, client)
 		if err != nil {
 			result <- &LocationPageResult{
+				Location:  loc,
 				Err:       err,
 				Page:      page,
 				Completed: false,
@@ -71,8 +71,9 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 
 		adsForPage, err := l.getItemsFromHTML(locationPageHTML)
 		if err != nil {
-			flogg.Error("Unable to parse location page html for %s page: %d", loc.Attributes.Title, page)
+			flogg.Error("Unable to parse location page html for %s page: %d", loc.Title, page)
 			result <- &LocationPageResult{
+				Location:  loc,
 				Err:       err,
 				Page:      page,
 				Completed: false,
@@ -84,6 +85,7 @@ func (l *LocationService) GetLocationPages(loc *LocalityEntry, result chan *Loca
 		hasMorePage = len(adsForPage) > 0
 
 		result <- &LocationPageResult{
+			Location:  loc,
 			Page:      page,
 			Items:     adsForPage,
 			Completed: !hasMorePage,
