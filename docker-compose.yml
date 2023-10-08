@@ -1,17 +1,16 @@
-version: '3.1'
+version: "3.1"
 
 services:
-
-  app:
-    build: 
-     context: ./
-    ports:
-      - 3000:3000
+  # app:
+  #   build:
+  #    context: ./
+  #   ports:
+  #     - 3000:3000
 
   tor:
     image: osminogin/tor-simple
     restart: always
-    
+
   mongodb:
     image: mongo
     restart: always
