@@ -7,8 +7,8 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/sirupsen/logrus"
-	"github.com/sycomancy/glasnik/infra"
-	"github.com/sycomancy/glasnik/types"
+	"github.com/sycomancy/glasnik/internal/infra"
+	"github.com/sycomancy/glasnik/internal/types"
 )
 
 const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .EntityList-item.EntityList-item--Regular"
