@@ -7,9 +7,9 @@ services:
   #   ports:
   #     - 3000:3000
 
-  tor:
-    image: osminogin/tor-simple
-    restart: always
+  # tor:
+  #   image: osminogin/tor-simple
+  #   restart: always
 
   mongodb:
     image: mongo

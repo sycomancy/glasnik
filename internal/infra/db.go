@@ -87,6 +87,18 @@ func InsertDocuments(collection string, documents []interface{}) *mongo.InsertMa
 	return result
 }
 
+func BulkReplace(collection string, models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
+	coll := client.Database(dbName).Collection(collection)
+	// models := []mongo.WriteModel{
+	// 	mongo.NewReplaceOneModel().SetFilter(bson.D{{"name", "Cafe Tomato"}}).
+	// 		SetReplacement(Restaurant{Name: "Cafe Zucchini", Cuisine: "French"}),
+	// 	mongo.NewUpdateOneModel().SetFilter(bson.D{{"name", "Cafe Zucchini"}}).
+	// 		SetUpdate(bson.D{{"$set", bson.D{{"name", "Zucchini Land"}}}}),
+	// }
+	opts := options.BulkWrite().SetOrdered(true)
+	return coll.BulkWrite(context.TODO(), models, opts)
+}
+
 func UpdateDocument(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
 	coll := client.Database(dbName).Collection(collection)
 	result, err := coll.UpdateOne(context.TODO(), filter, update)

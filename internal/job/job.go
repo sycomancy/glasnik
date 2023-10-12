@@ -6,6 +6,7 @@ import (
 	"github.com/sycomancy/glasnik/internal/infra"
 	"github.com/sycomancy/glasnik/internal/njuskalo"
 	"github.com/sycomancy/glasnik/internal/types"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Job struct {
@@ -20,41 +21,27 @@ func NewJob(url string) (*Job, error) {
 }
 
 func (j *Job) Start() error {
-	itemCh := make(chan types.AdEntry)
+	itemCh := make(chan []types.AdEntry)
 	go njuskalo.FetchEntry(j.Url, itemCh, j.client)
 
-	for item := range itemCh {
-		fmt.Println(item)
+	for items := range itemCh {
+		fmt.Println(items)
 	}
-	// entries, err := njuskalo.Fetch(j.Url, &j.client)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for _, entry := range entries {
-	// 	fmt.Println(entry.Id)
-	// }
 
 	return nil
 }
 
-// func NewFetchJob(urls []string, interval int) (*FetchJob, error) {
-// 	job := &FetchJob{Urls: urls}
-// 	return job, nil
-// }
-
-// func (f *FetchJob) start() {
-// 	ticker := time.NewTicker(5 * time.Second)
-// 	quit := make(chan struct{})
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-ticker.C:
-// 				// do stuff
-// 			case <-quit:
-// 				ticker.Stop()
-// 				return
-// 			}
-// 		}
-// 	}()
-// }
+func (j *Job) persistEntries(entries []types.AdEntry) {
+	models := make([]mongo.WriteModel, 0)
+	for _, entry := range entries {
+		model :=  
+		// append(models, )
+	}
+	// models := []mongo.WriteModel{
+	// 	mongo.NewReplaceOneModel().SetFilter(bson.D{{"name", "Cafe Tomato"}}).
+	// 		SetReplacement(Restaurant{Name: "Cafe Zucchini", Cuisine: "French"}),
+	// 	mongo.NewUpdateOneModel().SetFilter(bson.D{{"name", "Cafe Zucchini"}}).
+	// 		SetUpdate(bson.D{{"$set", bson.D{{"name", "Zucchini Land"}}}}),
+	// }
+	// infra.BulkReplace("entries")
+}
