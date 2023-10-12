@@ -9,17 +9,20 @@ import (
 	"github.com/sycomancy/glasnik/internal/job"
 )
 
-var url = "https://www.njuskalo.hr/prodaja-stanova/novi-zagreb-zapad"
+var urls = []string{"https://www.njuskalo.hr/sportski-motori", "https://www.njuskalo.hr/prodaja-stanova/novi-zagreb-istok"}
 
 func main() {
 	infra.LoadConfig()
 	infra.MongoConnect("mongodb://root:example@localhost:27017/?authSource=admin")
 	flag.Parse()
-	job, err := job.NewJob(url)
-	if err != nil {
-		fmt.Println("unable to start job", err)
-		os.Exit(-1)
-	}
+	for _, url := range urls {
+		job, err := job.NewJob(url)
+		if err != nil {
+			fmt.Println("unable to start job", err)
+			os.Exit(-1)
+		}
 
-	job.FetchEntries()
+		fmt.Println("started job for ", url)
+		job.FetchEntries()
+	}
 }

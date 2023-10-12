@@ -14,6 +14,7 @@ import (
 const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .EntityList-item.EntityList-item--Regular"
 const entityTitleQuery = ".entity-title a"
 const entityPriceQuery = ".price-item > .price"
+const descriptionQuery = ".entity-description-main"
 
 var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
 
@@ -126,12 +127,14 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 		var title string
 		var link string
 		var price string
+		var description string
 
 		itemId, idExists := s.Attr("data-href")
 		titleEl := s.Find(entityTitleQuery)
 		hrefAttr, exists := titleEl.Attr("href")
 		price = s.Find(entityPriceQuery).Text()
 		title = titleEl.Text()
+		description = s.Find(descriptionQuery).Text()
 
 		if idExists {
 			id = itemId
@@ -142,7 +145,7 @@ func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]typ
 			link = "https://njuskalo.hr" + hrefAttr
 		}
 
-		item := types.AdEntry{Id: id, Title: title, Link: link, Price: price}
+		item := types.AdEntry{Id: id, Title: title, Link: link, Price: price, Description: description}
 		items = append(items, item)
 	})
 

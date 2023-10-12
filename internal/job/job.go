@@ -43,5 +43,5 @@ func (j *Job) persistEntries(entries []types.AdEntry) {
 		return
 	}
 
-	fmt.Println("updated count: ", r.UpsertedCount, " modifiend: ", r.ModifiedCount)
+	fmt.Println("upserted: ", r.UpsertedCount, " modified: ", r.ModifiedCount)
 }
