@@ -105,7 +105,7 @@ func (t *IncognitoClient) GetURLData(url string, headers map[string]string) (sta
 			panic("Unable to connect to tor. Please check if tor client is running.")
 		}
 
-		logrus.Panic("somethingggggg", res)
+		logrus.Error("something bad happend ", res, err)
 		return res.Status, nil, err
 	}
 

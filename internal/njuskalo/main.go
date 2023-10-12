@@ -19,7 +19,7 @@ var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
 
-func FetchEntry(url string, result chan<- []types.AdEntry, client *infra.IncognitoClient) {
+func FetchEntries(url string, result chan<- []types.AdEntry, client *infra.IncognitoClient) {
 	hasMorePage := true
 	page := 1
 	items := make([]types.AdEntry, 0)

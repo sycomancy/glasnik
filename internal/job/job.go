@@ -6,6 +6,7 @@ import (
 	"github.com/sycomancy/glasnik/internal/infra"
 	"github.com/sycomancy/glasnik/internal/njuskalo"
 	"github.com/sycomancy/glasnik/internal/types"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -20,12 +21,11 @@ func NewJob(url string) (*Job, error) {
 	return job, nil
 }
 
-func (j *Job) Start() error {
-	itemCh := make(chan []types.AdEntry)
-	go njuskalo.FetchEntry(j.Url, itemCh, j.client)
-
-	for items := range itemCh {
-		fmt.Println(items)
+func (j *Job) FetchEntries() error {
+	entriesCh := make(chan []types.AdEntry)
+	go njuskalo.FetchEntries(j.Url, entriesCh, j.client)
+	for entries := range entriesCh {
+		j.persistEntries(entries)
 	}
 
 	return nil
@@ -34,14 +34,14 @@ func (j *Job) Start() error {
 func (j *Job) persistEntries(entries []types.AdEntry) {
 	models := make([]mongo.WriteModel, 0)
 	for _, entry := range entries {
-		model :=  
-		// append(models, )
+		model := mongo.NewUpdateOneModel().SetFilter(bson.D{{Key: "id", Value: entry.Id}}).SetUpdate(bson.M{"$set": entry}).SetUpsert(true)
+		models = append(models, model)
 	}
-	// models := []mongo.WriteModel{
-	// 	mongo.NewReplaceOneModel().SetFilter(bson.D{{"name", "Cafe Tomato"}}).
-	// 		SetReplacement(Restaurant{Name: "Cafe Zucchini", Cuisine: "French"}),
-	// 	mongo.NewUpdateOneModel().SetFilter(bson.D{{"name", "Cafe Zucchini"}}).
-	// 		SetUpdate(bson.D{{"$set", bson.D{{"name", "Zucchini Land"}}}}),
-	// }
-	// infra.BulkReplace("entries")
+	r, err := infra.BulkWrite("entries", models)
+	if err != nil {
+		fmt.Println("unable to insert data to DB", err)
+		return
+	}
+
+	fmt.Println("updated count: ", r.UpsertedCount, " modifiend: ", r.ModifiedCount)
 }
