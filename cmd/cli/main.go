@@ -9,14 +9,13 @@ import (
 	"github.com/sycomancy/glasnik/internal/job"
 )
 
-var urls = []string{"https://www.njuskalo.hr/prodaja-stanova?geo%5BlocationIds%5D=2698"}
+var url = "https://www.njuskalo.hr/prodaja-stanova?geo%5BlocationIds%5D=2698"
 
 func main() {
 	infra.LoadConfig()
 	infra.MongoConnect("mongodb://root:example@localhost:27017/?authSource=admin")
 	flag.Parse()
-	// client := infra.NewIncognitoClient(nil)
-	job, err := job.NewJob(urls)
+	job, err := job.NewJob(url)
 	if err != nil {
 		fmt.Println("unable to start job", err)
 		os.Exit(-1)

@@ -4,24 +4,38 @@ import (
 	"fmt"
 
 	"github.com/sycomancy/glasnik/internal/infra"
+	"github.com/sycomancy/glasnik/internal/njuskalo"
+	"github.com/sycomancy/glasnik/internal/types"
 )
 
 type Job struct {
-	Urls   []string
-	client infra.IncognitoClient
+	Url    string
+	client *infra.IncognitoClient
 }
 
-func NewJob(urls []string) (*Job, error) {
-	job := &Job{Urls: urls}
-	job.client = *infra.NewIncognitoClient(nil)
+func NewJob(url string) (*Job, error) {
+	job := &Job{Url: url}
+	job.client = infra.NewIncognitoClient(nil)
 	return job, nil
 }
 
-func (j *Job) Start() {
-	// result, err := njuskalo.Fetch()
-	for _, url := range j.Urls {
-		fmt.Println(url)
+func (j *Job) Start() error {
+	itemCh := make(chan types.AdEntry)
+	go njuskalo.FetchEntry(j.Url, itemCh, j.client)
+
+	for item := range itemCh {
+		fmt.Println(item)
 	}
+	// entries, err := njuskalo.Fetch(j.Url, &j.client)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// for _, entry := range entries {
+	// 	fmt.Println(entry.Id)
+	// }
+
+	return nil
 }
 
 // func NewFetchJob(urls []string, interval int) (*FetchJob, error) {
