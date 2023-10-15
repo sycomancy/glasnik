@@ -40,7 +40,7 @@ func (j *Job) FetchEntries() error {
 
 func (j *Job) createJobEntry() {
 	date := time.Now()
-	jobEntry, err := infra.InsertDocument("jobs", bson.D{
+	inserted, err := infra.InsertDocument("jobs", bson.D{
 		{
 			Key:   "started",
 			Value: date.Unix(),
@@ -49,7 +49,7 @@ func (j *Job) createJobEntry() {
 	if err != nil {
 		panic("unable to insert job in db")
 	}
-	j.jobId = jobEntry.InsertedID
+	j.jobId = inserted.InsertedID
 }
 
 func (j *Job) persistEntries(entries []types.AdEntry) {
