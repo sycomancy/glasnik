@@ -9,7 +9,7 @@ import (
 	"github.com/sycomancy/glasnik/internal/job"
 )
 
-var urls = []string{"https://www.njuskalo.hr/sportski-motori", "https://www.njuskalo.hr/prodaja-stanova/novi-zagreb-istok"}
+var urls = []string{"https://www.njuskalo.hr/prodaja-stanova/novi-zagreb-istok"}
 
 func main() {
 	infra.LoadConfig()
