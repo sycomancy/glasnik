@@ -9,14 +9,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var client *mongo.Client
+var DBClient *mongo.Client
 
 // TODO(dhudek): read from config
 var dbName = "colusa"
 
 func MongoConnect(uri string) error {
 	var err error
-	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	DBClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"db uri": uri,
@@ -31,7 +31,7 @@ func MongoConnect(uri string) error {
 }
 
 func FindDocument[T any](collection string, filter bson.D, result *T) *T {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	err := coll.FindOne(context.TODO(), filter).Decode(&result)
 
 	if err == mongo.ErrNoDocuments {
@@ -45,7 +45,7 @@ func FindDocument[T any](collection string, filter bson.D, result *T) *T {
 }
 
 func FindDocuments[T any](collection string, filter bson.D, result []*T) []*T {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	curr, err := coll.Find(context.TODO(), filter)
 	if err == mongo.ErrNoDocuments {
 		return nil
@@ -60,7 +60,7 @@ func FindDocuments[T any](collection string, filter bson.D, result []*T) []*T {
 }
 
 func CountDocuments(collection string, filter bson.D) int64 {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	count, err := coll.CountDocuments(context.TODO(), filter)
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func CountDocuments(collection string, filter bson.D) int64 {
 }
 
 func InsertDocument(collection string, document bson.D) (*mongo.InsertOneResult, error) {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	result, err := coll.InsertOne(context.TODO(), document)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func InsertDocument(collection string, document bson.D) (*mongo.InsertOneResult,
 }
 
 func InsertDocuments(collection string, documents []interface{}) *mongo.InsertManyResult {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	result, err := coll.InsertMany(context.TODO(), documents)
 	if err != nil {
 		panic(err)
@@ -88,13 +88,13 @@ func InsertDocuments(collection string, documents []interface{}) *mongo.InsertMa
 }
 
 func BulkWrite(collection string, models []mongo.WriteModel) (*mongo.BulkWriteResult, error) {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	opts := options.BulkWrite().SetOrdered(true)
 	return coll.BulkWrite(context.TODO(), models, opts)
 }
 
 func UpdateDocument(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	result, err := coll.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		panic(err)
@@ -103,7 +103,7 @@ func UpdateDocument(collection string, filter bson.D, update bson.D) *mongo.Upda
 }
 
 func UpdateDocuments(collection string, filter bson.D, update bson.D) *mongo.UpdateResult {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	result, err := coll.UpdateMany(context.TODO(), filter, update)
 	if err != nil {
 		panic(err)
@@ -112,7 +112,7 @@ func UpdateDocuments(collection string, filter bson.D, update bson.D) *mongo.Upd
 }
 
 func DeleteDocument(collection string, filter bson.D) *mongo.DeleteResult {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	result, err := coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
 		panic(err)
@@ -121,7 +121,7 @@ func DeleteDocument(collection string, filter bson.D) *mongo.DeleteResult {
 }
 
 func DeleteDocuments(collection string, filter bson.D) *mongo.DeleteResult {
-	coll := client.Database(dbName).Collection(collection)
+	coll := DBClient.Database(dbName).Collection(collection)
 	result, err := coll.DeleteMany(context.TODO(), filter)
 	if err != nil {
 		panic(err)

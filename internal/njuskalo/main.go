@@ -11,14 +11,31 @@ import (
 	"github.com/sycomancy/glasnik/internal/types"
 )
 
+// For listing
 const entityListItemsQuery = ".EntityList--Standard > .EntityList-items > .EntityList-item.EntityList-item--Regular"
 const entityTitleQuery = ".entity-title a"
 const entityPriceQuery = ".price-item > .price"
 const descriptionQuery = ".entity-description-main"
 
+// for details
+const entityDetailsQuery = ".BlockStandard.ClassifiedDetailDescription > div > div"
+
+// body > div.wrap-main > div.wrap-content.ClassifiedDetail.cf > main > article > div.content-primary > div > div.content-main > div.BlockStandard.ClassifiedDetailDescription > div > div
+
 var headers = map[string]string{"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"}
 
 var ErrBadRequest = fmt.Errorf("400 Bad Request")
+
+func FetchEntryDetails(entries []types.AdInDb, result chan<- types.FetchEntryDetailsResult, client *infra.IncognitoClient) {
+	for _, entry := range entries {
+		itemDetails, err := getDetailsForPage(entry.Add.Link, client)
+		if err != nil {
+			close(result)
+			return
+		}
+		result <- types.FetchEntryDetailsResult{Ad: entry, Details: itemDetails}
+	}
+}
 
 func FetchEntries(url string, result chan<- []types.AdEntry, client *infra.IncognitoClient) {
 	hasMorePage := true
@@ -79,6 +96,60 @@ func Fetch(url string, client *infra.IncognitoClient) ([]types.AdEntry, error) {
 	}
 
 	return items, nil
+}
+
+func getDetailsForPage(url string, client *infra.IncognitoClient) (types.AdEntryDetails, error) {
+	itemDetails := types.AdEntryDetails{}
+
+	status, body, error := client.GetURLDataWithRetries(url, headers)
+
+	if status == ErrBadRequest.Error() {
+		logrus.WithFields(logrus.Fields{
+			"status": status,
+			"url":    url,
+		}).Warning("when fetch entry details")
+		return itemDetails, error
+	}
+
+	if strings.Contains(status, "404") {
+		logrus.WithFields(logrus.Fields{
+			"status": status,
+			"url":    url,
+		}).Warning("when fetch entry details")
+		return itemDetails, nil
+	}
+
+	if error != nil {
+		return itemDetails, error
+	}
+
+	doc, err := goquery.NewDocumentFromReader(body)
+
+	if err != nil {
+		return itemDetails, fmt.Errorf("unable to get document from response %w", err)
+	}
+
+	description := doc.Find(entityDetailsQuery).Text()
+
+	itemDetails.Description = description
+
+	var k []string
+
+	var v []string
+
+	doc.Find(".ClassifiedDetailBasicDetails-listTerm").Each(func(i int, s *goquery.Selection) {
+		k = append(k, strings.TrimSpace(s.Text()))
+	})
+
+	doc.Find(".ClassifiedDetailBasicDetails-listDefinition").Each(func(i int, s *goquery.Selection) {
+		v = append(v, strings.TrimSpace(s.Text()))
+	})
+
+	for i, key := range k {
+		itemDetails.Attributes = append(itemDetails.Attributes, types.BasicInfoEntry{Key: key, Value: v[i]})
+	}
+
+	return itemDetails, nil
 }
 
 func getItemsForPage(url string, page int, client *infra.IncognitoClient) ([]types.AdEntry, error) {

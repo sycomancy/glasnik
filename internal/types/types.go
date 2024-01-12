@@ -1,5 +1,13 @@
 package types
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
+type AdInDb struct {
+	ID   primitive.ObjectID `bson:"_id"`
+	Slug string             `bson:"slug"`
+	Add  AdEntry
+}
+
 // Actual result from web scrapping
 type AdEntry struct {
 	Id          string `json:"id"`
@@ -7,6 +15,21 @@ type AdEntry struct {
 	Link        string `json:"link"`
 	Price       string `json:"price"`
 	Description string `json:"description"`
+}
+
+type BasicInfoEntry struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type AdEntryDetails struct {
+	Description string `json:"description"`
+	Attributes  []BasicInfoEntry
+}
+
+type FetchEntryDetailsResult struct {
+	Ad      AdInDb
+	Details AdEntryDetails
 }
 
 // Request for data fetching.

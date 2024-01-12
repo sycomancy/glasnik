@@ -103,7 +103,7 @@ func (t *IncognitoClient) GetURLData(url string, headers map[string]string) (sta
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {
 			logrus.Error("connection refused", res, err)
-			return res.Status, nil, err
+			return "", nil, err
 		}
 
 		logrus.Error("something bad happend ", res, err)
