@@ -128,3 +128,16 @@ func DeleteDocuments(collection string, filter bson.D) *mongo.DeleteResult {
 	}
 	return result
 }
+
+func CleanupCollections(collections []string) {
+	for _, collection := range collections {
+		DeleteDocuments(collection, bson.D{})
+		logrus.WithField("collection", collection).Info("cleaned up collection")
+	}
+}
+
+func CleanupAllCollections() {
+	collections := []string{"entries", "detailedEntries"}
+	CleanupCollections(collections)
+	logrus.Info("cleaned up all collections")
+}

@@ -1,5 +1,7 @@
+.PHONY: build run
+
 build:
-	go build -o bin/pricefetcher
+	go build -o bin/glasnik ./cmd/cli
 
 run: build
-	./bin/pricefetcher
+	./bin/glasnik

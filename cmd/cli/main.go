@@ -1,38 +1,34 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+	"github.com/sycomancy/glasnik/cmd/cli/commands"
 	"github.com/sycomancy/glasnik/internal/infra"
-	"github.com/sycomancy/glasnik/internal/job"
 )
 
-var urls = []string{"https://www.njuskalo.hr/prodaja-stanova/novi-zagreb-zapad"}
+var rootCmd = &cobra.Command{
+	Use:   "glasnik",
+	Short: "Glasnik is a web scraping tool",
+	Long:  `A web scraping tool for collecting and analyzing data from various sources`,
+}
 
-func main() {
+func init() {
+	cobra.OnInitialize(initConfig)
+	rootCmd.AddCommand(commands.GetCleanupCmd())
+	rootCmd.AddCommand(commands.GetFetchCmd())
+}
+
+func initConfig() {
 	infra.LoadConfig()
 	infra.MongoConnect("mongodb://root:example@localhost:27017/?authSource=admin")
-	flag.Parse()
+}
 
-	job, err := job.NewDetailsJob()
-	if err != nil {
-		fmt.Println("unable to start job", err)
-		os.Exit(-1)
+func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-
-	job.FetchDetails()
-
-	// for _, url := range urls {
-	// 	job, err := job.NewJob(url)
-	// 	fmt.Println(job)
-	// 	if err != nil {
-	// 		fmt.Println("unable to start job", err)
-	// 		os.Exit(-1)
-	// 	}
-
-	// 	fmt.Println("started job for ", url)
-	// 	job.FetchEntries()
-	// }
 }

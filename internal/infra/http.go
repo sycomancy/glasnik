@@ -137,7 +137,7 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 	}
 
 	// All retries failed
-	if err != nil {
+	if err != nil && body != nil {
 		body.Close()
 		return status, nil, err
 	}
