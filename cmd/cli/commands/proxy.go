@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/sycomancy/glasnik/internal/infra"
 	"github.com/sycomancy/glasnik/internal/proxy"
 )
 
@@ -11,6 +12,27 @@ func NewProxyCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "proxy",
 		Short: "Start a proxy server",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if err := infra.LoadConfig(); err != nil {
+				return
+			}
+			// CLI flags override env variables
+			if username == "" {
+				username = infra.Config.ProxyAuth.Username
+			}
+			if password == "" {
+				password = infra.Config.ProxyAuth.Password
+			}
+			if host == "" {
+				host = infra.Config.ProxyHost
+			}
+			if port == "" {
+				port = infra.Config.ProxyPort
+			}
+			if registryURL == "" {
+				registryURL = infra.Config.RegistryURL
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			server := proxy.NewProxyServer(host, port, username, password)
 

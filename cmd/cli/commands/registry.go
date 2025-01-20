@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/sycomancy/glasnik/internal/infra"
 	"github.com/sycomancy/glasnik/internal/proxy"
 )
 
@@ -11,6 +12,21 @@ func NewRegistryCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "registry",
 		Short: "Start a proxy registry server",
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if err := infra.LoadConfig(); err != nil {
+				return
+			}
+			// CLI flags override env variables
+			if username == "" {
+				username = infra.Config.RegistryAuth.Username
+			}
+			if password == "" {
+				password = infra.Config.RegistryAuth.Password
+			}
+			if port == "" {
+				port = infra.Config.RegistryPort
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			registry := proxy.NewRegistry(port, username, password)
 			return registry.Start()

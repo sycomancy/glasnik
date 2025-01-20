@@ -94,10 +94,24 @@ make build
 
 ## Environment Variables
 
+### General Configuration
+
+- `REGISTRY_URL`: URL of the registry server (default: http://localhost:8082)
+- `PROXY_HOST`: Host for the proxy server (default: localhost)
+- `PROXY_PORT`: Port for the proxy server (default: 8083)
+- `REGISTRY_PORT`: Port for the registry server (default: 8082)
+
 ### Proxy Server
 
 - `PROXY_USERNAME`: Username for proxy authentication
 - `PROXY_PASSWORD`: Password for proxy authentication
+
+### Registry Server
+
+- `REGISTRY_USERNAME`: Username for registry authentication
+- `REGISTRY_PASSWORD`: Password for registry authentication
+
+Note: Command line flags take precedence over environment variables.
 
 ## Example Usage
 
