@@ -1,21 +1,54 @@
-version: "3.1"
+version: "3.8"
 
 services:
-  # app:
-  #   build:
-  #    context: ./
-  #   ports:
-  #     - 3000:3000
+  registry:
+    build:
+      context: .
+      dockerfile: build/registry/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - PROXY_USERNAME=myuser
+      - PROXY_PASSWORD=mypass
+    networks:
+      - proxy-network
 
-  # tor:
-  #   image: osminogin/tor-simple
-  #   restart: always
+  proxy:
+    build:
+      context: .
+      dockerfile: build/proxy/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - PROXY_USERNAME=myuser
+      - PROXY_PASSWORD=mypass
+    command:
+      [
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8083",
+        "--username",
+        "${PROXY_USERNAME}",
+        "--password",
+        "${PROXY_PASSWORD}",
+        "--registry",
+        "http://registry:8082",
+      ]
+    depends_on:
+      - registry
+    networks:
+      - proxy-network
 
   mongodb:
     image: mongo
     restart: always
-    ports:
-      - 27017:27017
+    # ports:
+    #   - 27017:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+
+networks:
+  proxy-network:
+    driver: bridge

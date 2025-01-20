@@ -9,18 +9,22 @@ import (
 )
 
 type Registry struct {
-	proxies []ProxyInfo
-	mu      sync.RWMutex
-	server  *http.Server
+	proxies  []ProxyInfo
+	mu       sync.RWMutex
+	server   *http.Server
+	username string
+	password string
 }
 
-func NewRegistry(port string) *Registry {
+func NewRegistry(port, username, password string) *Registry {
 	r := &Registry{
-		proxies: make([]ProxyInfo, 0),
+		proxies:  make([]ProxyInfo, 0),
+		username: username,
+		password: password,
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/register", r.handleRegister)
+	mux.HandleFunc("/register", r.basicAuth(r.handleRegister))
 
 	r.server = &http.Server{
 		Addr:    ":" + port,
@@ -32,6 +36,24 @@ func NewRegistry(port string) *Registry {
 
 func (r *Registry) Start() error {
 	return r.server.ListenAndServe()
+}
+
+func (r *Registry) basicAuth(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		// Skip auth if credentials are not configured
+		if r.username == "" && r.password == "" {
+			handler(w, req)
+			return
+		}
+
+		username, password, ok := req.BasicAuth()
+		if !ok || username != r.username || password != r.password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		handler(w, req)
+	}
 }
 
 func (r *Registry) handleRegister(w http.ResponseWriter, req *http.Request) {
