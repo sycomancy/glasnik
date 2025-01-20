@@ -22,9 +22,11 @@ type FetchResult struct {
 	JobID interface{}
 }
 
-func NewJob(url string) (*Job, error) {
-	job := &Job{Url: url}
-	job.client = infra.NewIncognitoClient(nil)
+func NewJob(url string, client *infra.IncognitoClient) (*Job, error) {
+	job := &Job{
+		Url:    url,
+		client: client,
+	}
 	return job, nil
 }
 

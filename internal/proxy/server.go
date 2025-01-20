@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 type ProxyServer struct {
@@ -79,24 +80,45 @@ func (p *ProxyServer) handleDetails(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *ProxyServer) handleProxy(w http.ResponseWriter, r *http.Request) {
-	// Basic proxy implementation
-	client := &http.Client{}
-	resp, err := client.Do(r)
+	targetURL := r.URL.Query().Get("url")
+	if targetURL == "" {
+		http.Error(w, "missing target URL", http.StatusBadRequest)
+		return
+	}
+
+	// Create new request
+	proxyReq, err := http.NewRequest(r.Method, targetURL, r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Copy original headers
+	for key, values := range r.Header {
+		for _, value := range values {
+			proxyReq.Header.Add(key, value)
+		}
+	}
+
+	// Make request
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(proxyReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 	defer resp.Body.Close()
 
-	// Copy headers
+	// Copy response headers
 	for key, values := range resp.Header {
 		for _, value := range values {
 			w.Header().Add(key, value)
 		}
 	}
+
+	// Copy status code and body
 	w.WriteHeader(resp.StatusCode)
-	// Copy body using io.Copy
-	_, _ = io.Copy(w, resp.Body)
+	io.Copy(w, resp.Body)
 }
 
 func (p *ProxyServer) getOutboundIP() (string, error) {

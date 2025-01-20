@@ -7,11 +7,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sycomancy/glasnik/internal/proxy"
 )
 
 type tor struct {
@@ -53,8 +53,7 @@ func (t *tor) newIp() {
 }
 
 type IncognitoClient struct {
-	tor             *tor
-	client          *http.Client
+	registry        *proxy.Registry
 	backoffSchedule BackoffSchedule
 }
 
@@ -66,21 +65,16 @@ type IncognitoClient struct {
 type BackoffSchedule = []time.Duration
 
 // NewIP swaps a client's transport with a new one
-func NewIncognitoClient(backoffSchedule BackoffSchedule) *IncognitoClient {
-	t := &IncognitoClient{}
+func NewIncognitoClient(registry *proxy.Registry, backoffSchedule BackoffSchedule) *IncognitoClient {
+	t := &IncognitoClient{
+		registry: registry,
+	}
 
 	if backoffSchedule == nil {
 		t.backoffSchedule = []time.Duration{1 * time.Second, 3 * time.Second, 10 * time.Second}
 	} else {
 		t.backoffSchedule = backoffSchedule
 	}
-
-	t.tor = &tor{
-		MaxTimeout:         20 * time.Second,
-		MaxIdleConnections: 10,
-	}
-
-	t.client = t.tor.new()
 
 	return t
 }
@@ -98,15 +92,8 @@ func (t *IncognitoClient) GetURLData(url string, headers map[string]string) (sta
 		req.Header.Add(header, value)
 	}
 
-	res, err := t.client.Do(req)
-
+	res, err := t.registry.ForwardRequest(req)
 	if err != nil {
-		if strings.Contains(err.Error(), "connection refused") {
-			logrus.Error("connection refused", res, err)
-			return "", nil, err
-		}
-
-		logrus.Error("something bad happend ", res, err)
 		return "500", nil, err
 	}
 
@@ -132,7 +119,6 @@ func (t *IncognitoClient) GetURLDataWithRetries(url string, headers map[string]s
 			"retry in": backoff,
 		}).Warn("http-client handle error with retry")
 
-		t.tor.newIp()
 		time.Sleep(backoff)
 	}
 

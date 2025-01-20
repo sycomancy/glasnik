@@ -4,9 +4,33 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
+
+type ProxySelector interface {
+	SelectProxy(proxies []ProxyInfo) (*ProxyInfo, error)
+}
+
+type RoundRobinSelector struct {
+	current int
+	mu      sync.Mutex
+}
+
+func (r *RoundRobinSelector) SelectProxy(proxies []ProxyInfo) (*ProxyInfo, error) {
+	if len(proxies) == 0 {
+		return nil, fmt.Errorf("no proxies available")
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	selected := proxies[r.current%len(proxies)]
+	r.current++
+
+	return &selected, nil
+}
 
 type Registry struct {
 	proxies  []ProxyInfo
@@ -14,6 +38,7 @@ type Registry struct {
 	server   *http.Server
 	username string
 	password string
+	selector ProxySelector
 }
 
 func NewRegistry(port, username, password string) *Registry {
@@ -21,6 +46,7 @@ func NewRegistry(port, username, password string) *Registry {
 		proxies:  make([]ProxyInfo, 0),
 		username: username,
 		password: password,
+		selector: &RoundRobinSelector{},
 	}
 
 	mux := http.NewServeMux()
@@ -118,6 +144,34 @@ func (r *Registry) RegisterProxies(hosts []string, username, password string) er
 			return fmt.Errorf("timeout while registering proxies")
 		}
 	}
+}
+
+func (r *Registry) ForwardRequest(req *http.Request) (*http.Response, error) {
+	r.mu.RLock()
+	proxy, err := r.selector.SelectProxy(r.proxies)
+	r.mu.RUnlock()
+
+	if err != nil {
+		return nil, err
+	}
+
+	proxyURL, err := url.Parse(proxy.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create new request to proxy
+	proxyReq, err := http.NewRequest(req.Method, proxyURL.String()+req.URL.Path, req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy original headers
+	proxyReq.Header = req.Header
+	proxyReq.SetBasicAuth(proxy.Username, proxy.Password)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	return client.Do(proxyReq)
 }
 
 func checkProxy(host, username, password string) (ServerDetails, error) {

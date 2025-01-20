@@ -16,9 +16,10 @@ type DetailsJob struct {
 	client *infra.IncognitoClient
 }
 
-func NewDetailsJob() (*DetailsJob, error) {
-	job := &DetailsJob{}
-	job.client = infra.NewIncognitoClient(nil)
+func NewDetailsJob(client *infra.IncognitoClient) (*DetailsJob, error) {
+	job := &DetailsJob{
+		client: client,
+	}
 	return job, nil
 }
 
