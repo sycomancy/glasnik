@@ -17,8 +17,12 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.AddCommand(commands.GetCleanupCmd())
-	rootCmd.AddCommand(commands.GetFetchCmd())
+	rootCmd.AddCommand(
+		commands.GetCleanupCmd(),
+		commands.GetFetchCmd(),
+		commands.NewProxyCommand(),
+		commands.NewRegistryCommand(),
+	)
 }
 
 func initConfig() {

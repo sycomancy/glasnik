@@ -8,22 +8,51 @@ import (
 	"time"
 )
 
-type ProxyInfo struct {
-	URL      string
-	Username string
-	Password string
-	Details  ServerDetails
-}
-
 type Registry struct {
 	proxies []ProxyInfo
 	mu      sync.RWMutex
+	server  *http.Server
 }
 
-func NewRegistry() *Registry {
-	return &Registry{
+func NewRegistry(port string) *Registry {
+	r := &Registry{
 		proxies: make([]ProxyInfo, 0),
 	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/register", r.handleRegister)
+
+	r.server = &http.Server{
+		Addr:    ":" + port,
+		Handler: mux,
+	}
+
+	return r
+}
+
+func (r *Registry) Start() error {
+	return r.server.ListenAndServe()
+}
+
+func (r *Registry) handleRegister(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var proxyInfo ProxyInfo
+	if err := json.NewDecoder(req.Body).Decode(&proxyInfo); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	r.mu.Lock()
+	r.proxies = append(r.proxies, proxyInfo)
+	r.mu.Unlock()
+
+	fmt.Printf("Registered proxy: %+v\n", proxyInfo)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (r *Registry) RegisterProxies(hosts []string, username, password string) error {

@@ -1,7 +1,9 @@
 package proxy
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -20,6 +22,13 @@ type ProxyServer struct {
 type ServerDetails struct {
 	Hostname string `json:"hostname"`
 	IP       string `json:"ip"`
+}
+
+type ProxyInfo struct {
+	URL      string        `json:"url"`
+	Username string        `json:"username"`
+	Password string        `json:"password"`
+	Details  ServerDetails `json:"details"`
 }
 
 func NewProxyServer(host, port, username, password string) *ProxyServer {
@@ -99,4 +108,43 @@ func (p *ProxyServer) getOutboundIP() (string, error) {
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	return localAddr.IP.String(), nil
+}
+
+func (p *ProxyServer) RegisterWithRegistry(registryURL string) error {
+	details := ServerDetails{}
+	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+	details.Hostname = hostname
+
+	ip, err := p.getOutboundIP()
+	if err != nil {
+		return err
+	}
+	details.IP = ip
+
+	proxyInfo := ProxyInfo{
+		URL:      fmt.Sprintf("http://%s:%s", p.Host, p.Port),
+		Username: p.Username,
+		Password: p.Password,
+		Details:  details,
+	}
+
+	jsonData, err := json.Marshal(proxyInfo)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(registryURL+"/register", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to register with registry: %d", resp.StatusCode)
+	}
+
+	return nil
 }
